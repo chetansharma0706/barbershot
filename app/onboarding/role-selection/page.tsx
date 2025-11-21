@@ -1,0 +1,157 @@
+"use client";
+import { useEffect } from "react";
+import { motion } from "framer-motion";
+import { Scissors, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { useOnboarding } from "@/hooks/use-onboarding";
+export default function RoleSelection() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const supabase = createClient();
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/auth/signup");
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  const { setUserRole, updateOnboardingStep } = useOnboarding()
+
+  const handleRoleSelect = async (role: 'barber' | 'customer') => {
+    await setUserRole(role)
+    
+    if (role === 'barber') {
+      await updateOnboardingStep('barber_setup')
+      router.push('/onboarding/barber_setup')
+    } else {
+      await updateOnboardingStep('customer_preferences')
+      router.push('/onboarding/customer_preferences')
+    }
+  }
+
+  // const handleRoleSelect = async (role: "barber" | "customer") => {
+  //   try {
+  //     const { data: { user } } = await supabase.auth.getUser();
+  //     if (!user) throw new Error("Not authenticated");
+
+  //     // Get stored user data
+  //     const pendingData = localStorage.getItem("pendingUserData");
+  //     const userData = pendingData ? JSON.parse(pendingData) : {};
+
+  //     // Create profile with role
+  //     const { error } = await supabase.from("profiles").insert({
+  //       user_id: user.id,
+  //       full_name: userData.name || user.user_metadata.full_name || "",
+  //       phone: userData.phone || user.user_metadata.phone || "",
+  //       role: role,
+  //     });
+
+  //     if (error) throw error;
+
+  //     // Clean up
+  //     localStorage.removeItem("pendingUserData");
+
+  //     toast({
+  //       title: "Perfect!",
+  //       description: role === "barber" ? "Let's set up your shop" : "Let's find you a barber",
+  //     });
+
+  //     // Navigate based on role
+  //     if (role === "barber") {
+  //       router.push("/barber-setup");
+  //     } else {
+  //       router.push("/find-barbers");
+  //     }
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Something went wrong",
+  //       description: error.message,
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
+
+  return (
+    <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center p-4">
+      {/* Ambient lighting */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gold/10 via-transparent to-accent/10 pointer-events-none" />
+      
+      <motion.div
+        className="absolute top-20 left-20 w-96 h-96 bg-gold/10 rounded-full blur-3xl"
+        animate={{
+          scale: [1, 1.3, 1],
+          opacity: [0.3, 0.5, 0.3],
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10 w-full max-w-md"
+      >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-center mb-8"
+        >
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 text-shimmer">Choose Your Path</h1>
+          <p className="text-muted-foreground text-base md:text-lg">How would you like to use our platform?</p>
+        </motion.div>
+
+        <div className="space-y-4">
+          {/* Barber Card */}
+          <motion.button
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            onClick={() => handleRoleSelect("barber")}
+            className="w-full glass-card p-6 md:p-8 hover:bg-card/60 transition-all duration-300 group mobile-touch-target"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold group-hover:scale-110 transition-transform">
+                <Scissors className="w-8 h-8 text-primary-foreground" />
+              </div>
+              <div className="flex-1 text-left">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-1">I'm a Barber</h2>
+                <p className="text-muted-foreground text-sm md:text-base">Create my digital shop</p>
+              </div>
+            </div>
+          </motion.button>
+
+          {/* Customer Card */}
+          <motion.button
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            onClick={() => handleRoleSelect("customer")}
+            className="w-full glass-card p-6 md:p-8 hover:bg-card/60 transition-all duration-300 group mobile-touch-target"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <User className="w-8 h-8 text-primary-foreground" />
+              </div>
+              <div className="flex-1 text-left">
+                <h2 className="text-xl md:text-2xl font-bold text-foreground mb-1">I Need a Haircut</h2>
+                <p className="text-muted-foreground text-sm md:text-base">Find barbers near me</p>
+              </div>
+            </div>
+          </motion.button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
