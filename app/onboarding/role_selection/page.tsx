@@ -1,26 +1,11 @@
 "use client";
-import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Scissors, User } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import { useOnboarding } from "@/hooks/use-onboarding";
 export default function RoleSelection() {
   const router = useRouter();
-  const { toast } = useToast();
-  const supabase = createClient();
 
-  useEffect(() => {
-    // Check if user is authenticated
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/auth/signup");
-      }
-    };
-    checkAuth();
-  }, [router]);
 
   const { setUserRole, updateOnboardingStep } = useOnboarding()
 
@@ -36,47 +21,6 @@ export default function RoleSelection() {
     }
   }
 
-  // const handleRoleSelect = async (role: "barber" | "customer") => {
-  //   try {
-  //     const { data: { user } } = await supabase.auth.getUser();
-  //     if (!user) throw new Error("Not authenticated");
-
-  //     // Get stored user data
-  //     const pendingData = localStorage.getItem("pendingUserData");
-  //     const userData = pendingData ? JSON.parse(pendingData) : {};
-
-  //     // Create profile with role
-  //     const { error } = await supabase.from("profiles").insert({
-  //       user_id: user.id,
-  //       full_name: userData.name || user.user_metadata.full_name || "",
-  //       phone: userData.phone || user.user_metadata.phone || "",
-  //       role: role,
-  //     });
-
-  //     if (error) throw error;
-
-  //     // Clean up
-  //     localStorage.removeItem("pendingUserData");
-
-  //     toast({
-  //       title: "Perfect!",
-  //       description: role === "barber" ? "Let's set up your shop" : "Let's find you a barber",
-  //     });
-
-  //     // Navigate based on role
-  //     if (role === "barber") {
-  //       router.push("/barber-setup");
-  //     } else {
-  //       router.push("/find-barbers");
-  //     }
-  //   } catch (error: any) {
-  //     toast({
-  //       title: "Something went wrong",
-  //       description: error.message,
-  //       variant: "destructive",
-  //     });
-  //   }
-  // };
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center p-4">

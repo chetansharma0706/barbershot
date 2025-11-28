@@ -1,111 +1,73 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
 
 /* -----------------------------------
-   SINGLE GLOBAL THEME (BLACK + GOLD)
+   BARBERBRO THEME (Default: Dark)
 -------------------------------------- */
+
 :root {
-  --radius: 1.5rem;
+    --background: 0 0% 7%;
+    --foreground: 40 10% 95%;
 
-  /* CORE COLORS */
-  --background: hsl(0 0% 7%);
-  --foreground: hsl(40 10% 96%);
+    --card: 0 0% 10%;
+    --card-foreground: 40 10% 95%;
 
-  --card: hsl(0 0% 10%);
-  --card-foreground: hsl(40 10% 96%);
+    --popover: 0 0% 8%;
+    --popover-foreground: 40 10% 95%;
 
-  --popover: hsl(0 0% 12%);
-  --popover-foreground: hsl(40 10% 96%);
+    --primary: 42 100% 55%;
+    --primary-foreground: 0 0% 7%;
 
-  --primary: hsl(42 100% 55%); /* GOLD */
-  --primary-foreground: hsl(0 0% 7%);
+    --secondary: 30 25% 20%;
+    --secondary-foreground: 40 10% 95%;
 
-  --secondary: hsl(30 20% 18%);
-  --secondary-foreground: hsl(40 10% 96%);
+    --muted: 0 0% 15%;
+    --muted-foreground: 40 5% 65%;
 
-  --muted: hsl(0 0% 15%);
-  --muted-foreground: hsl(40 10% 70%);
+    --accent: 35 85% 50%;
+    --accent-foreground: 0 0% 7%;
 
-  --accent: hsl(42 95% 50%);
-  --accent-foreground: hsl(0 0% 7%);
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 40 10% 95%;
 
-  --destructive: hsl(0 75% 50%);
-  --destructive-foreground: hsl(40 10% 96%);
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 42 100% 55%;
 
-  --border: hsl(0 0% 18%);
-  --input: hsl(0 0% 15%);
-  --ring: hsl(42 100% 55%);
+    --radius: 1.5rem;
 
-  /* GOLD BRAND TOKENS */
-  --gold: hsl(45 93% 47%);
-  --gold-light: hsl(45 100% 60%);
-  --gold-glow: hsl(42 100% 55%);
+    --gold: 45 93% 47%;
+    --gold-light: 45 100% 60%;
 
-  /* GLASS */
-  --glass-bg: hsl(0 0% 12%);
-  --glass-border: hsl(0 0% 25%);
-
-  /* GRADIENTS */
-  --gradient-gold: linear-gradient(135deg, hsl(42 100% 55%), hsl(35 90% 50%));
-  --gradient-dark: linear-gradient(180deg, hsl(0 0% 7%), hsl(0 0% 10%));
-  --gradient-edge: radial-gradient(ellipse at top, hsla(42 100% 55% / 0.15), transparent);
-
-  /* SHADOWS */
-  --shadow-gold: 0 8px 32px hsla(42 100% 55% / 0.25);
-  --shadow-gold-lg: 0 20px 60px hsla(42 100% 55% / 0.35);
-  --shadow-subtle: 0 4px 16px hsla(0 0% 0% / 0.6);
-
-  --transition-smooth: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* -----------------------------------
-   TAILWIND COLOR BRIDGE
--------------------------------------- */
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --font-manrope: 'Manrope', sans-serif;
-  --font-dm-sans: 'DM Sans', sans-serif;
-}
-
-/* -----------------------------------
-   BASE STYLES
--------------------------------------- */
+    --gold-glow: 42 100% 55%;
+    --bronze: 30 60% 45%;
+    --copper: 25 75% 48%;
+    
+    --glass-bg: 0 0% 10%;
+    --glass-border: 0 0% 25%;
+    
+    --gradient-gold: linear-gradient(135deg, hsl(42 100% 55%), hsl(35 85% 50%));
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 7%), hsl(0 0% 10%));
+    --gradient-shimmer: linear-gradient(90deg, transparent, hsla(42 100% 55% / 0.1), transparent);
+    --gradient-edge: radial-gradient(ellipse at top, hsla(42 100% 55% / 0.15), transparent 50%);
+    
+    --shadow-gold: 0 8px 32px hsla(42 100% 55% / 0.3);
+    --shadow-gold-lg: 0 20px 60px hsla(42 100% 55% / 0.4);
+    --shadow-subtle: 0 4px 16px hsla(0 0% 0% / 0.6);
+    
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground antialiased font-manrope;
-    font-feature-settings: "kern" 1, "liga" 1;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-dm-sans font-bold;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-manrope);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html {
@@ -113,91 +75,80 @@
   }
 }
 
-/* -----------------------------------
-   UTILITIES
--------------------------------------- */
 @layer utilities {
   .glass-card {
-    background: hsla(0 0% 100% / 0.03);
-    backdrop-filter: blur(22px);
-    border: 1px solid hsla(0 0% 100% / 0.08);
+    background: linear-gradient(135deg, 
+      hsla(var(--glass-bg) / 0.7), 
+      hsla(var(--glass-bg) / 0.4));
+    backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--glass-border) / 0.3);
+    box-shadow: 0 8px 32px hsla(0 0% 0% / 0.3);
     border-radius: 1.5rem;
-    box-shadow: var(--shadow-subtle);
   }
-
+  
   .glass-input {
-    background: hsla(0 0% 100% / 0.04);
-    backdrop-filter: blur(14px);
-    border: 2px solid hsla(0 0% 100% / 0.12);
+    background: hsla(var(--glass-bg) / 0.5);
+    backdrop-filter: blur(16px);
+    border: 2px solid hsl(var(--glass-border) / 0.4);
+    transition: all 0.3s ease;
     height: 3.5rem;
-    padding: 0 1rem;
+    font-size: 1rem;
     border-radius: 1rem;
-    transition: var(--transition-smooth);
+    padding: 0 1rem;
   }
-
+  
   .glass-input:focus {
-    border-color: var(--gold);
-    box-shadow: 0 0 24px hsla(42 100% 55% / 0.4);
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 0 3px hsla(var(--primary) / 0.2), 0 0 20px hsla(var(--primary) / 0.3);
+  }
+  
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
   }
 
   .mobile-button {
     width: 100%;
-    height: 3.4rem;
+    height: 3.5rem;
     border-radius: 1rem;
-    font-size: 1rem;
     font-weight: 600;
+    font-size: 1rem;
   }
-
+  
   .gold-glow {
-    box-shadow: var(--shadow-gold);
+    box-shadow: 0 0 24px hsla(var(--gold-glow) / 0.4);
   }
-
+  
   .text-shimmer {
-    background: linear-gradient(
-      90deg,
-      var(--foreground),
-      var(--primary),
-      var(--foreground)
-    );
+    background: linear-gradient(90deg, 
+      hsl(var(--foreground)), 
+      hsl(var(--primary)), 
+      hsl(var(--foreground)));
     background-size: 200% auto;
     -webkit-background-clip: text;
-    color: transparent;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
     animation: shimmer 3s linear infinite;
   }
-
+  
   @keyframes shimmer {
     to {
       background-position: 200% center;
     }
   }
-}
-
-
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+  
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
   }
-  to {
-    transform: rotate(360deg);
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }

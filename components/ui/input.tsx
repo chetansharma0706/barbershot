@@ -2,8 +2,13 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+type InputProps = React.ComponentProps<"input"> & {
+  error?: string | null
+}
+
+function Input({ className, type , error , ...props }: InputProps) {
   return (
+    <div className="relative">
     <input
       type={type}
       data-slot="input"
@@ -15,6 +20,8 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       )}
       {...props}
     />
+     {error && <span className="text-[10px] text-[#F45C5C] mt-1 absolute -bottom-4 left-1">{error}</span>}
+    </div>
   )
 }
 

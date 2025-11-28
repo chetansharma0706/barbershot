@@ -1,55 +1,22 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {  ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 export default function Login() {
   const router = useRouter();
-  const { toast } = useToast();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Unified redirect function
-  const redirectToDashboard = (role: string | null) => {
-    if (role === "barber") {
-      router.push("/barber-dashboard");
-    } else {
-      router.push("/find-barbers");
-    }
-  };
 
-  // Check auth on mount ONLY
-  useEffect(() => {
-    let ignore = false;
-
-    async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session || ignore) return;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_role")
-        .eq("user_id", session.user.id)
-        .single();
-
-      redirectToDashboard(profile?.user_role || null);
-    }
-
-    checkAuth();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
 
   // LOGIN HANDLER
   const handleLogin = async (e: React.FormEvent) => {
@@ -57,32 +24,23 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const {  error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      // Fetch profile ONE time
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_role")
-        .eq("user_id", data.user.id)
-        .single();
-
-      toast({
-        title: "Welcome back!",
+      toast.success("Welcome back!", {
         description: "You've successfully logged in.",
       });
 
-      redirectToDashboard(profile?.user_role || null);
+      router.push("/");
     } catch (error: any) {
-      toast({
-        title: "Login failed",
+      toast.error("Login failed", {
         description: error.message,
-        variant: "destructive",
       });
+      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
@@ -131,7 +89,7 @@ export default function Login() {
                 value={email}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 required
-                className="mobile-input"
+                className="mobile-input glass-input"
               />
             </div>
 
@@ -144,14 +102,14 @@ export default function Login() {
                 value={password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 required
-                className="mobile-input"
+                className="mobile-input glass-input"
               />
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="mobile-button"
+              className="mobile-button w-full"
             >
               {loading ? "Signing in..." : "Sign In"}
             </Button>

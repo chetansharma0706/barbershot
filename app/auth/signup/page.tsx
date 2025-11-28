@@ -4,13 +4,12 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast, useToast } from "@/hooks/use-toast";
-import { Scissors, Mail, Phone, Lock } from "lucide-react";
+import { Mail, Phone, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 export default function Signup() {
   const router = useRouter();
-  const { toast } = useToast();
   const supabase = createClient();
   const [formData, setFormData] = useState({
     name: "",
@@ -26,39 +25,36 @@ export default function Signup() {
 
     try {
       // 1. Sign up (creates user + session)
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${location.origin}/auth/callback`,
-          data: {
-            name: formData.name,
-            phone: formData.phone,
-          },
+      const { data: authData, error: authError } = await supabase.auth.signUp(
+        {
+          email: formData.email,
+          password: formData.password,
         },
-      });
+      );
 
       if (authError) throw authError;
 
       const user = authData.user;
-      console.log("👉 SIGNUP USER:", user);
-      if (!user) throw new Error("Signup failed. No user returned.");
+      if (!user) throw new Error("User not found after signup");
 
-      // 2. Insert into profiles
-      const { error: profileError } = await supabase.from("profiles").insert({
+      const { error : profileError } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: formData.name,
         phone: formData.phone,
         email: formData.email,
         user_role: null, // role added in onboarding
-      }).eq('id', user.id);
+      });
 
       if (profileError) throw profileError;
 
-      // 3. Redirect
-      router.push("/role-selection");
+      // 3. Show success message
+      toast.success("Account created successfully!");
+
+      // 4. Redirect
+      router.push("/onboarding/role_selection");
     } catch (error: any) {
-      alert(error.message || "Signup failed");
+      console.error("Signup error:", error);
+      toast.error(error?.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -205,7 +201,7 @@ export default function Signup() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="mobile-button hover:shadow-gold-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                className="mobile-button w-full hover:shadow-gold-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {loading ? "Creating Account..." : "Continue"}
               </Button>

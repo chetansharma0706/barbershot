@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import {  useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
-import { toast } from './use-toast'
+import { toast } from 'sonner'
 
 export type OnboardingStep = 
   | 'role_selection' 
   | 'barber_setup' 
-    | 'customer_preferences'
+  | 'customer_preferences'
 
 export function useOnboarding() {
   const router = useRouter()
@@ -25,13 +25,10 @@ export function useOnboarding() {
             onboarding_completed: completed 
           })
           .eq('id', user.id)
+        toast.success('Onboarding step updated successfully');  
         
     } catch (error:any) {
-        toast({
-        title: "Something went wrong",
-        description: error.message,
-        variant: "destructive",
-      });
+        toast.error(error.message || "Something went wrong");
     }finally {
       setLoading(false)
     }
@@ -46,13 +43,10 @@ export function useOnboarding() {
       .from('profiles')
       .update({ user_role: role })
       .eq('id', user.id)
+      toast.success('User role set successfully');
         
     } catch (error:any) {
-        toast({
-        title: "Something went wrong",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message || "Something went wrong");
     }finally {
       setLoading(false)
     }

@@ -16,7 +16,7 @@ const Hero = () => {
           className="absolute inset-0 bg-cover bg-center opacity-30"
           style={{ backgroundImage: `url('/hero-bg.jpg')` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-background/80" />
+        <div className="absolute inset-0 bg-black/50"></div>
         
         {/* Animated Orbs */}
         <motion.div
