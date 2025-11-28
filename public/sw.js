@@ -1,5 +1,5 @@
 // Minimal service worker for offline caching
-const CACHE_NAME = 'barbershot-cache-v1';
+const CACHE_NAME = 'barberbro-cache-v1';
 const STATIC_ASSETS = [
   '/',
   '/favicon-32x32.png',
