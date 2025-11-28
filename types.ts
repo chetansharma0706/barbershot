@@ -1,4 +1,3 @@
-
 export interface AddressSuggestion {
   label: string;
   city: string;
