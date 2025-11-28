@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Manrope , DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,13 +29,17 @@ export const metadata: Metadata = {
       { url: "/favicon-32x32.png", sizes: "32x32" },
       { url: "/android-chrome-192x192.png", sizes: "192x192" },
       { url: "/android-chrome-512x512.png", sizes: "512x512" },
-      { url: "/favicon.ico" }
+      
     ],
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180" }
     ]
   },
-  manifest: "/site.webmanifest"
+  manifest: "/manifest",
+  themeColor: '#000000',
+  other: {
+    'msapplication-TileColor': '#000000'
+  }
 };
 
 export default function RootLayout({
@@ -54,6 +59,8 @@ export default function RootLayout({
       >
         {children}
         <Toaster position="bottom-right"/>
+        {/* Register the Service Worker via a client component */}
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

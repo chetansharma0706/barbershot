@@ -5,6 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   "name": "BarberBro",
   "short_name": "BarberBro",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
@@ -12,12 +13,14 @@ export default function manifest(): MetadataRoute.Manifest {
     {
       "src": "/android-chrome-192x192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "/android-chrome-512x512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ]
   }
