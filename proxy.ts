@@ -94,5 +94,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/:path*"]
+  matcher: [
+    "/((?!_next|icons|favicon.ico|site.webmanifest|manifest.webmanifest|apple-touch-icon|sw.js|service-worker.js).*)"
+  ]
 };
+
