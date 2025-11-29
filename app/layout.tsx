@@ -22,7 +22,12 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "BarberBro - Next Gen Barber Booking",
   description: "Book your barber appointments with ease using BarberBro, the next generation barber booking platform.",
-  manifest: "/manifest.json",
+  icons: {
+    icon: "favicon.ico",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({

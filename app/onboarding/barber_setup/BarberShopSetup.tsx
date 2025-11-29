@@ -139,6 +139,8 @@ export default function BarberShopSetup({userid}: {userid: string }) {
     cover_image_url: "", 
     logo_url: ""        
   });
+
+
   
   
   const [customSchedule, setCustomSchedule] = useState<Record<WeekDay, ScheduleDay>>(
