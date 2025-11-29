@@ -102,7 +102,7 @@ const Hero = () => {
                 Start For Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button variant="outline" className="text-lg font-semibold">
+              <Button variant="outline" className="text-lg font-semibold text-gold glass-border glass-bg border-gold cursor-pointer">
                 Watch Demo
               </Button>
             </motion.div>

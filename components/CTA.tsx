@@ -91,7 +91,7 @@ const CTA = () => {
               Start Your Free Trial
               <ArrowRight className ="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button variant="outline" className="font-bold glass-border glass-bg hover:text-foreground cursor-pointer border-gold" >
+            <Button variant="outline" className="font-bold glass-border glass-bg text-gold cursor-pointer border-gold" >
               Book a Demo
             </Button>
           </div>
