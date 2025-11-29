@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
 
@@ -15,11 +16,14 @@ const CTA = () => {
     <section className="py-24 relative overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(/cta-bg.jpg)` }}
+        <Image
+          src="/cta-bg-45.jpg"
+          alt="CTA background"
+          fill
+          className="object-cover"
+          priority
         />
-        <div className="absolute inset-0 bg-background/85" />
+        <div className="absolute inset-0 bg-black/70" />
       </div>
 
       {/* Background Effects */}
@@ -45,7 +49,7 @@ const CTA = () => {
         >
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold/10 border border-gold/20">
-            <span className="text-sm text-gold font-medium font-inter">Limited Time Offer</span>
+            <span className="text-sm font-medium text-gold">Limited Time Offer</span>
           </div>
 
           {/* Heading */}

@@ -43,26 +43,26 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-8 flex-nowrap whitespace-nowrap">
             <button
               onClick={() => scrollToSection("how-it-works")}
-              className="text-muted-foreground hover:text-foreground transition-colors font-inter font-medium"
+              className="text-muted-foreground hover:text-foreground transition-colors font-inter font-medium whitespace-nowrap"
             >
               How It Works
             </button>
             <button
               onClick={() => scrollToSection("features")}
-              className="text-muted-foreground hover:text-foreground transition-colors font-inter font-medium"
+              className="text-muted-foreground hover:text-foreground transition-colors font-inter font-medium whitespace-nowrap"
             >
               Features
             </button>
             <button
               onClick={() => scrollToSection("testimonials")}
-              className="text-muted-foreground hover:text-foreground transition-colors font-inter font-medium"
+              className="text-muted-foreground hover:text-foreground transition-colors font-inter font-medium whitespace-nowrap"
             >
               Testimonials
             </button>
-            <Button size="default" className="gold-glow font-bold" onClick={() => router.push('/auth/signup')}>
+            <Button size="default" className="gold-glow font-bold px-3" onClick={() => router.push('/auth/signup')}>
               Get Started Free
             </Button>
           </div>
@@ -76,7 +76,7 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+          {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden glass-card mt-2 p-6 space-y-4 animate-fade-in">
             <button
