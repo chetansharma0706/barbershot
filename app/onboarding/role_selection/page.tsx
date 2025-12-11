@@ -66,7 +66,7 @@ export default function RoleSelection() {
             className="w-full glass-card p-6 md:p-8 hover:bg-card/60 transition-all duration-300 group mobile-touch-target"
           >
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold group-hover:scale-110 transition-transform">
+              <div className="w-16 h-16 rounded-2xl bg-gold flex items-center justify-center shadow-gold group-hover:scale-110 transition-transform">
                 <Scissors className="w-8 h-8 text-primary-foreground" />
               </div>
               <div className="flex-1 text-left">
@@ -85,7 +85,7 @@ export default function RoleSelection() {
             className="w-full glass-card p-6 md:p-8 hover:bg-card/60 transition-all duration-300 group mobile-touch-target"
           >
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent to-accent/80 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div className="w-16 h-16 rounded-2xl bg-gold flex items-center justify-center shadow-gold group-hover:scale-110 transition-transform">
                 <User className="w-8 h-8 text-primary-foreground" />
               </div>
               <div className="flex-1 text-left">

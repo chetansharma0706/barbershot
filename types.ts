@@ -5,10 +5,10 @@ export interface AddressSuggestion {
   zip: string;
 }
 
- export interface ScheduleDay {
+export interface ScheduleDay {
+  open: string;
+  close: string;
   isOpen: boolean;
-  start: string;
-  end: string;
 }
 
 export type WeekDay = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
@@ -19,9 +19,10 @@ export interface BusinessHoursDetails {
 }
 
 export interface BusinessHoursState {
-  type: 'daily' | 'weekend' | 'custom';
-  details: BusinessHoursDetails;
+  type: 'per_day';
 }
+
+export type BusinessHoursPayload = Record<'monday'|'tuesday'|'wednesday'|'thursday'|'friday'|'saturday'|'sunday', ScheduleDay>;
 
 export interface ShopFormData {
   user_id: string;
@@ -33,9 +34,11 @@ export interface ShopFormData {
   zip_code: string;
   latitude: string;
   longitude: string;
-  business_hours: BusinessHoursState;
+  business_hours: BusinessHoursPayload | Record<string, unknown>; // Use explicit type at submit; UI handles per-day schedule
   cover_image_url: string;
   logo_url: string;
+  cover_img: string;
+  logo_img: string;
 }
 
 export interface ValidationErrors {

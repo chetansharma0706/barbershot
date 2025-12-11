@@ -99,6 +99,9 @@
   /* Glass */
   --color-glass-bg: hsl(var(--glass-bg));
   --color-glass-border: hsl(var(--glass-border));
+
+  /* gradients */
+  --color-gradient-gold: var(--gradient-gold);
 }
 
   
