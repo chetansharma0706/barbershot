@@ -18,6 +18,7 @@ import { createShop } from '@/app/actions/createShop';
 import { toast } from 'sonner';
 import { useImageKit } from '@/hooks/useImageKit';
 import { Image } from '@imagekit/next';
+import { useOnboarding } from '@/hooks/use-onboarding';
 
 /* --- TYPES & INTERFACES --- */
 
@@ -122,6 +123,7 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
   // const { uploadImage, deleteImage, loading: uploadingLoading, error: uploadingError } = useUpload();
   const logoUpload = useImageKit()
   const coverUpload = useImageKit()
+  const { completeOnboarding } = useOnboarding();
   // console.log(logoUpload)
   console.log(coverUpload.uploadState.error)
 
@@ -276,49 +278,51 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (validate()) {
-      setLoading(true);
-      // Convert UI schedule to DB format: lowercase weekday keys
-      const finalBusinessHours: BusinessHoursPayload = DAYS_OF_WEEK.reduce((acc, day) => ({
-        ...acc,
-        [day.toLowerCase()]: {
-          open: customSchedule[day].open,
-          close: customSchedule[day].close,
-          isOpen: !!customSchedule[day].isOpen
-        }
-      }), {} as BusinessHoursPayload);
-      createShop({
-        shop_name: formData.shop_name,
-        shop_description: formData.shop_description,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zip_code: formData.zip_code,
-        business_hours: finalBusinessHours,
-        cover_img: coverUpload.uploadState.uploadedFile?.url || "",
-        logo_img: logoUpload.uploadState.uploadedFile?.url || "",
-      })
-        .then((res) => {
-          setLoading(false);
-          if (res.error) {
-            toast.error(res.error);
-          }
-          else {
-            toast.success(res.message || "Shop created successfully!");
-          }
-        });
+ const handleSubmit = async () => {
+  if (!validate()) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
 
-      // Simulate loading for demo purposes
-      // setTimeout(() => {
-      //   console.log("FINAL SUBMISSION JSON:", JSON.stringify(finalPayload, null, 2));
-      //   setLoading(false);
-      //   alert("Setup Complete! Check console for JSON.");
-      // }, 1500);
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
+  setLoading(true);
+
+  // Convert UI schedule to DB format
+  const finalBusinessHours: BusinessHoursPayload = DAYS_OF_WEEK.reduce(
+    (acc, day) => ({
+      ...acc,
+      [day.toLowerCase()]: {
+        open: customSchedule[day].open,
+        close: customSchedule[day].close,
+        isOpen: !!customSchedule[day].isOpen
+      }
+    }),
+    {} as BusinessHoursPayload
+  );
+
+  try {
+    const res = await createShop({
+      shop_name: formData.shop_name,
+      shop_description: formData.shop_description,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      zip_code: formData.zip_code,
+      business_hours: finalBusinessHours,
+      cover_img: coverUpload.uploadState.uploadedFile?.url || "",
+      logo_img: logoUpload.uploadState.uploadedFile?.url || ""
+    });
+
+    if (res.error) throw new Error(res.error);
+
+    toast.success(res.message || "Shop created successfully!");
+    await completeOnboarding("barber");
+  } catch (error: any) {
+    toast.error(error.message || "Something went wrong during shop creation.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen pb-28 font-manrope selection:bg-[hsl(var(--primary))] selection:text-black" onClick={() => setShowSuggestions(false)}>

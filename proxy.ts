@@ -58,7 +58,7 @@ export async function proxy(request: NextRequest) {
 
     const step = profile?.onboarding_step || "role_selection";
     const dashboard =
-      profile?.user_role === "barber" ? "/dashboard" : "/search";
+      profile?.user_role === "barber" ? "/barber/dashboard" : "/search";
 
     // logged in + hits public
     if (isPublic) {

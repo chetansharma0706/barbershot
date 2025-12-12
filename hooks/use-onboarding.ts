@@ -1,12 +1,14 @@
 import {  useState } from 'react'
-import { useRouter } from 'next/navigation'
+// import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 export type OnboardingStep = 
   | 'role_selection' 
   | 'barber_setup' 
   | 'customer_preferences'
+  | 'done'
 
 export function useOnboarding() {
   const router = useRouter()
@@ -56,7 +58,7 @@ export function useOnboarding() {
 
   const completeOnboarding = async (role: 'barber' | 'customer') => {
     await updateOnboardingStep('role_selection', true)
-    const destination = role === 'barber' ? '/dashboard' : '/search'
+    const destination = role === 'barber' ? '/barber/dashboard' : '/search'
     router.push(destination)
   }
 
