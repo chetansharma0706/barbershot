@@ -364,6 +364,7 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
     try {
       const res = await createShop({
         shop_name: formData.shop_name,
+        shop_subdomain: formData.shop_subdomain,
         shop_description: formData.shop_description,
         address: formData.address,
         city: formData.city,

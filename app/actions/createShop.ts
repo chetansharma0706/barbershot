@@ -5,6 +5,7 @@ import type { BusinessHoursPayload } from '@/types';
 
 export async function createShop(data: {
     shop_name: string;
+    shop_subdomain: string;
     shop_description: string;
     address: string;
     city: string;
@@ -47,6 +48,7 @@ export async function createShop(data: {
                 business_hours: data.business_hours || null,
                 cover_image_url: data.cover_img || null,
                 logo_url: data.logo_img || null,
+                subdomain: data.shop_subdomain,
                 
                 
 
