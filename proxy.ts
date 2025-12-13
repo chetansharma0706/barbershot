@@ -1,10 +1,11 @@
-// proxy.ts
+// middleware.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function proxy(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+export default async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
+  // Ignore static files
   if (
     pathname.startsWith("/_next") ||
     pathname.match(/\.(png|jpg|jpeg|svg|webp)$/)
@@ -12,10 +13,28 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // 🔹 SUBDOMAIN DETECTION
+  const host = request.headers.get("host") || "";
+  const ROOT_DOMAIN = "barberbro.shop";
+
+  let subdomain: string | null = null;
+
+  if (host.endsWith(ROOT_DOMAIN)) {
+    subdomain = host.replace(`.${ROOT_DOMAIN}`, "");
+  }
+
+
+  const isMainDomain =
+    !subdomain || subdomain === "www" || subdomain === "barberbro";
+
+  // 🔹 If this is a SHOP subdomain, SKIP AUTH COMPLETELY
+  if (!isMainDomain) {
+    return NextResponse.next();
+  }
+
+  // 🔹 MAIN APP AUTH LOGIC CONTINUES (unchanged)
   let response = NextResponse.next({
-    request: {
-      headers: request.headers
-    }
+    request: { headers: request.headers }
   });
 
   const supabase = createServerClient(
@@ -39,16 +58,13 @@ export async function proxy(request: NextRequest) {
     data: { user }
   } = await supabase.auth.getUser();
 
-  // public routes
   const publicRoutes = ["/", "/auth/login", "/auth/signup", "/auth/callback"];
   const isPublic = publicRoutes.includes(pathname);
 
-  // not logged in
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // logged in
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -60,7 +76,6 @@ export async function proxy(request: NextRequest) {
     const dashboard =
       profile?.user_role === "barber" ? "/barber/dashboard" : "/search";
 
-    // logged in + hits public
     if (isPublic) {
       if (!profile?.onboarding_completed) {
         return NextResponse.redirect(
@@ -71,7 +86,6 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL(dashboard, request.url));
     }
 
-    // private + incomplete onboarding
     if (
       !profile?.onboarding_completed &&
       !pathname.startsWith("/onboarding")
@@ -81,7 +95,6 @@ export async function proxy(request: NextRequest) {
       );
     }
 
-    // onboarding completed but trying to access onboarding
     if (
       profile?.onboarding_completed &&
       pathname.startsWith("/onboarding")
@@ -98,4 +111,3 @@ export const config = {
     "/((?!_next|icons|favicon.ico|site.webmanifest|manifest.webmanifest|apple-touch-icon|sw.js|service-worker.js).*)"
   ]
 };
-

@@ -8,11 +8,11 @@ export const metadata = {
 };
 
 const navLinks = [
-  { id: 'home', icon: Home, label: 'Home', href: '/dashboard' },
-  { id: 'calendar', icon: Calendar, label: 'Schedule', href: '/dashboard/schedule' },
-  { id: 'clients', icon: Users, label: 'Clients', href: '/dashboard/clients' },
-  { id: 'notifications', icon: Bell, label: 'Alerts', href: '/dashboard/notifications' },
-  { id: 'settings', icon: Settings, label: 'Settings', href: '/dashboard/settings' },
+  { id: 'home', icon: Home, label: 'Home', href: '/barber/dashboard' },
+  { id: 'calendar', icon: Calendar, label: 'Schedule', href: '/barber/dashboard/schedule' },
+  { id: 'clients', icon: Users, label: 'Clients', href: '/barber/dashboard/clients' },
+  { id: 'notifications', icon: Bell, label: 'Alerts', href: '/barber/dashboard/notifications' },
+  { id: 'settings', icon: Settings, label: 'Settings', href: '/barber/dashboard/settings' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
