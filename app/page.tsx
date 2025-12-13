@@ -7,11 +7,13 @@ import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 import { headers } from "next/headers";
 import ShopPage from "./shopPage";
+import { createClient } from "@/utils/supabase/client";
+import { notFound } from "next/navigation";
 
-const page = async () => {
+const ROOT_DOMAIN = "barberbro.shop";
 
+const Page = async () => {
   const host = (await headers()).get("host") || "";
-  const ROOT_DOMAIN = "barberbro.shop";
 
   let subdomain: string | null = null;
 
@@ -19,12 +21,32 @@ const page = async () => {
     subdomain = host.replace(`.${ROOT_DOMAIN}`, "");
   }
 
-  const isShop =
-    subdomain && subdomain !== "www" && subdomain !== "barberbro";
+  const isShopSubdomain =
+    subdomain &&
+    subdomain !== "www" &&
+    subdomain !== "barberbro";
 
-  if (isShop) {
-    return <ShopPage subdomain={subdomain} />
+  // 🔹 CASE 1: SHOP SUBDOMAIN
+  if (isShopSubdomain) {
+    const supabase = createClient();
+
+    const { data: shop, error } = await supabase
+      .from("barber_shops")
+      .select("*")
+      .eq("subdomain", subdomain)
+      .eq("is_active", true) // or is_published = true
+      .single();
+
+    // Shop does NOT exist → 404
+    if (error || !shop) {
+      notFound();
+    }
+
+    // Shop exists → render shop
+    return <ShopPage subdomain={shop.subdomain} />;
   }
+
+  // 🔹 CASE 2: MAIN DOMAIN
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -38,4 +60,5 @@ const page = async () => {
   );
 };
 
-export default page;
+export default Page;
+

@@ -27,6 +27,7 @@ export type BusinessHoursPayload = Record<'monday'|'tuesday'|'wednesday'|'thursd
 export interface ShopFormData {
   user_id: string;
   shop_name: string;
+  shop_subdomain: string;
   shop_description: string;
   address: string;
   city: string;

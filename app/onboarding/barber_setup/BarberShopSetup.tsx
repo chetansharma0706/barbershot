@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   MapPin,
   Upload,
@@ -10,7 +10,11 @@ import {
   Scissors,
   Camera,
   // Map as MapIcon,
-  Search
+  Search,
+  Globe,
+  Loader2,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddressSuggestion, CardProps, InputProps, LabelProps, ScheduleDay, ShopFormData, TextareaProps, ValidationErrors, WeekDay, BusinessHoursPayload } from '@/types';
@@ -19,6 +23,7 @@ import { toast } from 'sonner';
 import { useImageKit } from '@/hooks/useImageKit';
 import { Image } from '@imagekit/next';
 import { useOnboarding } from '@/hooks/use-onboarding';
+import { checkSubdomainAvailability } from '@/app/actions/check-subdomain';
 
 /* --- TYPES & INTERFACES --- */
 
@@ -120,17 +125,19 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-  // const { uploadImage, deleteImage, loading: uploadingLoading, error: uploadingError } = useUpload();
+  // subdomain status check
+  const [subdomainStatus, setSubdomainStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+
   const logoUpload = useImageKit()
   const coverUpload = useImageKit()
   const { completeOnboarding } = useOnboarding();
   // console.log(logoUpload)
-  console.log(coverUpload.uploadState.error)
 
   // Form State
   const [formData, setFormData] = useState<ShopFormData>({
     user_id: userid,
     shop_name: "",
+    shop_subdomain: "",
     shop_description: "",
     address: "",
     city: "",
@@ -158,6 +165,59 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
       }
     }), {} as Record<WeekDay, ScheduleDay>)
   );
+
+  useEffect(() => {
+    // guard: too short → don’t check
+    if (formData.shop_subdomain.length < 3) {
+      setSubdomainStatus("idle");
+      return;
+    }
+
+    setSubdomainStatus("checking");
+
+    const timer = setTimeout(() => {
+      // IMPORTANT: wrap async logic in an IIFE
+      (async () => {
+        try {
+          const result = await checkSubdomainAvailability(
+            formData.shop_subdomain
+          );
+
+          if (!result.available) {
+            setSubdomainStatus("taken");
+            setErrors(prev => ({
+              ...prev,
+              shop_subdomain: "This URL is already taken",
+            }));
+          } else {
+            setSubdomainStatus("available");
+            setErrors(prev => ({
+              ...prev,
+              shop_subdomain: null,
+            }));
+          }
+        } catch (err) {
+          console.error("Subdomain check failed", err);
+          setSubdomainStatus("idle");
+        }
+      })();
+    }, 500); // debounce delay
+
+    return () => clearTimeout(timer);
+  }, [formData.shop_subdomain]);
+
+
+
+
+  const handleSubdomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '');
+
+    setFormData(prev => ({ ...prev, shop_subdomain: value }));
+    setSubdomainStatus('idle');
+    setErrors(prev => ({ ...prev, shop_subdomain: null }));
+  };
 
 
   // --- HANDLERS ---
@@ -222,7 +282,7 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
     if (files && files[0]) {
       const file = files[0];
       if (type === 'cover') {
-        if(coverUpload.uploadState.uploadedFile){
+        if (coverUpload.uploadState.uploadedFile) {
           await coverUpload.deleteFile(coverUpload.uploadState.uploadedFile.fileId);
         }
         const result = await coverUpload.uploadFile(file, { folder: `/barberbro/${formData.user_id}/shop-assets` });
@@ -230,7 +290,7 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
           toast.error("Image upload failed. Please try again.");
         }
       } else {
-        if(logoUpload.uploadState.uploadedFile){
+        if (logoUpload.uploadState.uploadedFile) {
           await logoUpload.deleteFile(logoUpload.uploadState.uploadedFile.fileId);
         }
         const result = await logoUpload.uploadFile(file, { folder: `/barberbro/${formData.user_id}/shop-assets` });
@@ -258,6 +318,8 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
   const validate = (): boolean => {
     const newErrors: ValidationErrors = {};
     if (!formData.shop_name.trim()) newErrors.shop_name = "Shop name is required";
+    if (!formData.shop_subdomain.trim()) newErrors.shop_subdomain = "Shop URL is required";
+    if (subdomainStatus === 'taken') newErrors.shop_subdomain = "Shop URL is unavailable";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.state.trim()) newErrors.state = "State is required";
@@ -278,50 +340,50 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
     return Object.keys(newErrors).length === 0;
   };
 
- const handleSubmit = async () => {
-  if (!validate()) {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    return;
-  }
+  const handleSubmit = async () => {
+    if (!validate()) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  // Convert UI schedule to DB format
-  const finalBusinessHours: BusinessHoursPayload = DAYS_OF_WEEK.reduce(
-    (acc, day) => ({
-      ...acc,
-      [day.toLowerCase()]: {
-        open: customSchedule[day].open,
-        close: customSchedule[day].close,
-        isOpen: !!customSchedule[day].isOpen
-      }
-    }),
-    {} as BusinessHoursPayload
-  );
+    // Convert UI schedule to DB format
+    const finalBusinessHours: BusinessHoursPayload = DAYS_OF_WEEK.reduce(
+      (acc, day) => ({
+        ...acc,
+        [day.toLowerCase()]: {
+          open: customSchedule[day].open,
+          close: customSchedule[day].close,
+          isOpen: !!customSchedule[day].isOpen
+        }
+      }),
+      {} as BusinessHoursPayload
+    );
 
-  try {
-    const res = await createShop({
-      shop_name: formData.shop_name,
-      shop_description: formData.shop_description,
-      address: formData.address,
-      city: formData.city,
-      state: formData.state,
-      zip_code: formData.zip_code,
-      business_hours: finalBusinessHours,
-      cover_img: coverUpload.uploadState.uploadedFile?.url || "",
-      logo_img: logoUpload.uploadState.uploadedFile?.url || ""
-    });
+    try {
+      const res = await createShop({
+        shop_name: formData.shop_name,
+        shop_description: formData.shop_description,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zip_code,
+        business_hours: finalBusinessHours,
+        cover_img: coverUpload.uploadState.uploadedFile?.url || "",
+        logo_img: logoUpload.uploadState.uploadedFile?.url || ""
+      });
 
-    if (res.error) throw new Error(res.error);
+      if (res.error) throw new Error(res.error);
 
-    toast.success(res.message || "Shop created successfully!");
-    await completeOnboarding("barber");
-  } catch (error: any) {
-    toast.error(error.message || "Something went wrong during shop creation.");
-  } finally {
-    setLoading(false);
-  }
-};
+      toast.success(res.message || "Shop created successfully!");
+      await completeOnboarding("barber");
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong during shop creation.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   return (
@@ -344,6 +406,7 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
             <h2 className="text-lg font-dm-sans font-bold tracking-wide text-[hsl(var(--foreground))]">Shop Details</h2>
           </CardHeader>
           <div className="p-5 space-y-6">
+
             <div>
               <Label required>Shop Name</Label>
               <Input
@@ -354,6 +417,44 @@ export default function BarberShopSetup({ userid }: { userid: string }) {
                 error={errors.shop_name}
               />
             </div>
+
+            {/* NEW FIELD: SHOP URL */}
+            <div>
+              <Label required>Shop URL</Label>
+              <div className="relative">
+               
+                <Input
+                  name="shop_subdomain"
+                  placeholder="your-shop-name"
+                  value={formData.shop_subdomain}
+                  onChange={handleSubdomainChange}
+                  error={errors.shop_subdomain}
+                  className="pl-12 pr-40" // Corrected padding for alignment
+                  autoComplete="off"
+                />
+                <div className="absolute right-4 top-1 text-sm font-medium text-[hsl(var(--muted-foreground))] pointer-events-none flex items-center h-full">
+                  <span className="pb-0.5">.barberbro.shop</span>
+                </div>
+              </div>
+              <div className="mt-2 min-h-[20px]">
+                {subdomainStatus === 'checking' && (
+                  <span className="text-xs text-[hsl(var(--primary))] flex items-center gap-1.5 animate-pulse">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Checking availability...
+                  </span>
+                )}
+                {subdomainStatus === 'available' && formData.shop_subdomain.length > 2 && (
+                  <span className="text-xs text-green-400 flex items-center gap-1.5 animate-in fade-in slide-in-from-left-1">
+                    <Check className="w-3.5 h-3.5" /> URL is available!
+                  </span>
+                )}
+                {subdomainStatus === 'taken' && (
+                  <span className="text-xs text-red-400 flex items-center gap-1.5 animate-in fade-in slide-in-from-left-1">
+                    <AlertCircle className="w-3.5 h-3.5" /> Taken. Try another.
+                  </span>
+                )}
+              </div>
+            </div>
+
 
             <div>
               <Label>Description</Label>
