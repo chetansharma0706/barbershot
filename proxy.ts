@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+const ROOT_DOMAIN = "barberbro.shop";
+
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -15,24 +17,24 @@ export default async function middleware(request: NextRequest) {
 
   // 🔹 SUBDOMAIN DETECTION
   const host = request.headers.get("host") || "";
-  const ROOT_DOMAIN = "barberbro.shop";
 
-  let subdomain: string | null = null;
+  const subdomain = host.endsWith(ROOT_DOMAIN)
+    ? host.replace(`.${ROOT_DOMAIN}`, "")
+    : null;
 
-  if (host.endsWith(ROOT_DOMAIN)) {
-    subdomain = host.replace(`.${ROOT_DOMAIN}`, "");
+  const isShopSubdomain =
+    subdomain &&
+    subdomain !== "www" &&
+    subdomain !== "barberbro";
+
+  // 🔥 SHOP WORLD → REWRITE INTO /(shop)
+  if (isShopSubdomain) {
+    return NextResponse.rewrite(
+      new URL(`/(shop)${pathname}`, request.url)
+    );
   }
 
-
-  const isMainDomain =
-    !subdomain || subdomain === "www" || subdomain === "barberbro";
-
-  // 🔹 If this is a SHOP subdomain, SKIP AUTH COMPLETELY
-  if (!isMainDomain) {
-    return NextResponse.next();
-  }
-
-  // 🔹 MAIN APP AUTH LOGIC CONTINUES (unchanged)
+  // 🔹 MAIN DOMAIN → AUTH LOGIC
   let response = NextResponse.next({
     request: { headers: request.headers }
   });

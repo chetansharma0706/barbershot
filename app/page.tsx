@@ -1,24 +1,27 @@
-import { headers } from "next/headers";
-import AppPage from "./(app)/app-page";
-import ShopRouter from "./(shop)/shop-page";
+import Navbar from "@/components/Navbar";
+import Hero from "@/components/Hero";
+import HowItWorks from "@/components/HowItWorks";
+import Features from "@/components/Features";
+import Testimonials from "@/components/Testimonials";
+import CTA from "@/components/CTA";
+import Footer from "@/components/Footer";
 
-const ROOT_DOMAIN = "barberbro.shop";
 
-export default async function Page() {
-  const host = (await headers()).get("host") || "";
 
-  const subdomain = host.endsWith(ROOT_DOMAIN)
-    ? host.replace(`.${ROOT_DOMAIN}`, "")
-    : null;
+const Page = async () => {
 
-  const isShop =
-    subdomain &&
-    subdomain !== "www" &&
-    subdomain !== "barberbro";
+  return (
+    <div className="min-h-screen">
+      <Navbar />
+      <Hero />
+      <HowItWorks />
+      <Features />
+      <Testimonials />
+      <CTA />
+      <Footer />
+    </div>
+  );
+};
 
-  if (isShop) {
-    return <ShopRouter />;
-  }
+export default Page;
 
-  return <AppPage />;
-}

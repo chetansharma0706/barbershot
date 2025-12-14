@@ -1,5 +1,5 @@
 import ShopClient from "./ShopClient";
 
-export default function ShopRouter() {
+export default function Page() {
   return <ShopClient />;
 }
