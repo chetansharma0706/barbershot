@@ -6,18 +6,17 @@ const ROOT_DOMAIN = "barberbro.shop";
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host") || "";
 
-  // Ignore static files
+  // 1️⃣ Ignore static assets
   if (
     pathname.startsWith("/_next") ||
-    pathname.match(/\.(png|jpg|jpeg|svg|webp)$/)
+    pathname.match(/\.(png|jpg|jpeg|svg|webp|ico)$/)
   ) {
     return NextResponse.next();
   }
 
-  // 🔹 SUBDOMAIN DETECTION
-  const host = request.headers.get("host") || "";
-
+  // 2️⃣ Detect subdomain
   const subdomain = host.endsWith(ROOT_DOMAIN)
     ? host.replace(`.${ROOT_DOMAIN}`, "")
     : null;
@@ -27,14 +26,21 @@ export default async function middleware(request: NextRequest) {
     subdomain !== "www" &&
     subdomain !== "barberbro";
 
-  // 🔥 SHOP WORLD → REWRITE INTO /(shop)
+  const isMainDomain = !isShopSubdomain;
+
+  // 3️⃣ BLOCK direct access to /shop on main domain
+  if (isMainDomain && pathname.startsWith("/shop")) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // 4️⃣ SHOP SUBDOMAIN → rewrite to /shop
   if (isShopSubdomain) {
     return NextResponse.rewrite(
-      new URL(`/(shop)${pathname}`, request.url)
+      new URL(`/shop${pathname}`, request.url)
     );
   }
 
-  // 🔹 MAIN DOMAIN → AUTH LOGIC
+  // 5️⃣ MAIN DOMAIN → auth logic
   let response = NextResponse.next({
     request: { headers: request.headers }
   });
@@ -84,7 +90,6 @@ export default async function middleware(request: NextRequest) {
           new URL(`/onboarding/${step}`, request.url)
         );
       }
-
       return NextResponse.redirect(new URL(dashboard, request.url));
     }
 
@@ -110,6 +115,6 @@ export default async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next|icons|favicon.ico|site.webmanifest|manifest.webmanifest|apple-touch-icon|sw.js|service-worker.js).*)"
+    "/((?!_next|favicon.ico|icons|site.webmanifest|manifest.webmanifest|apple-touch-icon|sw.js|service-worker.js).*)"
   ]
 };
