@@ -1,39 +1,8 @@
-import { createClient } from "@/utils/supabase/server";
-import { headers } from "next/headers";
-import { notFound } from "next/navigation";
-
-const ROOT_DOMAIN = "barberbro.shop";
+import { useShop } from "../shopContext";
 
 export default async function AppointmentPage() {
-  const host = (await headers()).get("host") || "";
 
-  const subdomain = host.endsWith(ROOT_DOMAIN)
-    ? host.replace(`.${ROOT_DOMAIN}`, "")
-    : null;
-
-   const isShopSubdomain =
-      subdomain &&
-      subdomain !== "www" &&
-      subdomain !== "barberbro";
-  
-    // ❌ If someone somehow lands here without shop subdomain
-    if (!isShopSubdomain) {
-      notFound();
-    }
-  
-    const supabase = await createClient();
-  
-    const { data: shop, error } = await supabase
-      .from("barber_shops")
-      .select("*")
-      .eq("subdomain", subdomain)
-      .eq("is_active", true)
-      .single();
-  
-    if (error || !shop) {
-      notFound();
-    }  
-
+  const shop = useShop();
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-white">
       <div className="w-full max-w-md bg-neutral-900 rounded-xl p-6 shadow-lg">
@@ -42,7 +11,7 @@ export default async function AppointmentPage() {
         </h1>
 
         <p className="text-sm text-neutral-400 mb-6">
-          Booking for shop: <span className="font-medium">{shop.name}</span>
+          Booking for shop: <span className="font-medium">{shop.shop_name}</span>
         </p>
 
         <form className="space-y-4">
