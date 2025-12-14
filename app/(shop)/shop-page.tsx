@@ -1,9 +1,5 @@
-import ShopView from "./shopPage"; // UI component
-import { useShop } from "./shopContext";
+import ShopClient from "./ShopClient";
 
-
-export default async function ShopRouter() {
-  const shop = useShop()
-
-  return <ShopView shop={shop} />;
+export default function ShopRouter() {
+  return <ShopClient />;
 }
