@@ -174,7 +174,7 @@ export default function ShopPage({ shop }: { shop: Shop | null }) {
               </Card>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <Card className="flex items-start md:items-center gap-3 md:gap-4 p-4 md:p-5">
+                <Card className="flex items-start gap-3 md:gap-4 p-4 md:p-5">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-input flex items-center justify-center text-gold flex-shrink-0">
                     <MapPin size={20} className="md:w-6 md:h-6" />
                   </div>
@@ -185,17 +185,13 @@ export default function ShopPage({ shop }: { shop: Shop | null }) {
                   </div>
                 </Card>
                 
-                <Card className="flex items-start md:items-center gap-3 md:gap-4 p-4 md:p-5">
+                <Card className="flex items-start gap-3 md:gap-4 p-4 md:p-5">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-input flex items-center justify-center text-gold flex-shrink-0">
                     <Phone size={20} className="md:w-6 md:h-6" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-foreground mb-1 text-sm md:text-base">Contact</h4>
                     <p className="text-xs md:text-sm text-muted-foreground break-words">{shop?.phone || "No phone listed"}</p>
-                    <div className="flex gap-3 mt-2 text-muted-foreground">
-                      <Instagram size={16} className="hover:text-gold cursor-pointer transition-colors" />
-                      <Globe size={16} className="hover:text-gold cursor-pointer transition-colors" />
-                    </div>
                   </div>
                 </Card>
               </div>
@@ -258,9 +254,6 @@ export default function ShopPage({ shop }: { shop: Shop | null }) {
       {/* --- Mobile Sticky Action Bar --- */}
       <div className="fixed bottom-0 left-0 right-0 px-4 py-3 md:py-4 bg-background/90 backdrop-blur-xl border-t border-border md:hidden z-30 pb-safe">
         <div className="flex gap-3">
-          <Button variant="outline" size="icon" className="shrink-0 aspect-square rounded-xl w-12 h-12">
-             <Navigation size={20} />
-          </Button>
           <Button 
             className="w-full mobile-button shadow-[var(--shadow-gold-lg)] animate-pulse hover:animate-none h-12" 
             onClick={() => setIsBookingOpen(true)}
