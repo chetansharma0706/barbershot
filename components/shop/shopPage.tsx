@@ -56,12 +56,11 @@ export default function ShopPage({ shop }: { shop: Shop | null }) {
       {/* --- Hero Section --- */}
       <div className="relative h-[45vh] md:h-[50vh] w-full overflow-hidden">
         {/* Background Image with Gradient Overlay */}
-        <div className="absolute inset-0 relative">
-          <Image 
+        <div className="absolute inset-0">
+          <img 
             src={bgImage} 
             alt="Shop Interior" 
             className="w-full h-full object-cover"
-            fill
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
           <div className="absolute inset-0 bg-primary/10 mix-blend-overlay" />
