@@ -3,8 +3,24 @@ import type { NextConfig } from "next";
 import withPWA from "@ducanh2912/next-pwa";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'i.sstatic.net',
+        pathname: '/l60Hf.png',
+        
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+        pathname: '/**',
+      },
+    ],
+  },
   /* your existing config options here */
 experimental: {
+  
    serverActions: {
       allowedOrigins: [
       'localhost:3000', // Allow local development

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import BookingModal from "./bookingModal";
-import Image from "next/image";
 
 type Shop = Tables<'barber_shops'>
 
