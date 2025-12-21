@@ -1,5 +1,4 @@
 "use client";
-import { motion } from "framer-motion";
 import { UserPlus, Palette, Share2 } from "lucide-react";
 // Images are now served from `public/` — reference them by path (e.g. `/step-signup.jpg`).
 import Image from "next/image";
@@ -33,11 +32,8 @@ const HowItWorks = () => {
     <section id="how-it-works" className="py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+        <div
+        
           className="text-center mb-16 space-y-4"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-playfair font-bold">
@@ -47,17 +43,13 @@ const HowItWorks = () => {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-inter">
             No complexity. No learning curve. Just three steps to your digital storefront.
           </p>
-        </motion.div>
+        </div>
 
         {/* Steps */}
         <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
           {steps.map((step, index) => (
-            <motion.div
+            <div
               key={step.number}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.2 }}
               className="relative group"
             >
               {/* Connector Line (not for last item on desktop) */}
@@ -100,7 +92,7 @@ const HowItWorks = () => {
                 {/* Hover Glow */}
                 <div className="absolute inset-0 bg-gradient-gold opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-2xl" />
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

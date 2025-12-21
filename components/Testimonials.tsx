@@ -1,5 +1,4 @@
 "use client";
-import { motion } from "framer-motion";
 import { Quote } from "lucide-react";
 // Images are served from `public/` — reference them by path (e.g. `/barber-1.jpg`).
 import Image from "next/image";
@@ -36,11 +35,8 @@ const Testimonials = () => {
 
       <div className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+        <div
+        
           className="text-center mb-16 space-y-4"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-playfair font-bold">
@@ -50,17 +46,14 @@ const Testimonials = () => {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-inter">
             Real feedback from professionals who chose pride over paperwork.
           </p>
-        </motion.div>
+        </div>
 
         {/* Testimonials Grid */}
         <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
-            <motion.div
+            <div
               key={testimonial.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.15 }}
+            
               className="group"
             >
               <div className="glass-card p-8 rounded-2xl hover:border-gold/40 transition-all duration-300 h-full flex flex-col">
@@ -94,7 +87,7 @@ const Testimonials = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

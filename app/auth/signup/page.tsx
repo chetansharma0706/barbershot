@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,31 +66,19 @@ export default function Signup() {
       <div className="absolute inset-0 bg-gradient-to-b from-gold/10 via-transparent to-accent/10 pointer-events-none" />
       
       {/* Animated orbs */}
-      <motion.div
+      <div
         className="absolute top-20 right-20 w-72 h-72 md:w-96 md:h-96 bg-gold/10 rounded-full blur-3xl"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
+       
       />
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+      <div
+        
         className="relative z-10 w-full max-w-md"
       >
         <div className="glass-card p-6 md:p-8">
           {/* Logo */}
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+          <div
+           
             className="flex justify-center mb-6"
           >
             <div className="w-16 h-16 rounded-2xl bg-gradient-gold flex items-center justify-center shadow-gold">
@@ -99,25 +86,21 @@ export default function Signup() {
               Barberbro.
             </span>
             </div>
-          </motion.div>
+          </div>
 
           {/* Title */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
+          <div
+            
             className="text-center mb-8"
           >
             <h1 className="text-2xl md:text-3xl font-bold mb-2">Create Your Account</h1>
             <p className="text-muted-foreground text-base">Join the premium barbering platform</p>
-          </motion.div>
+          </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
+            <div
+             
             >
               <Label htmlFor="name" className="text-foreground text-base mb-2 block">Full Name</Label>
               <Input
@@ -129,12 +112,10 @@ export default function Signup() {
                 className="glass-input"
                 placeholder="Your name"
               />
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
+            <div
+             
             >
               <Label htmlFor="email" className="text-foreground text-base mb-2 block">
                 <Mail className="w-4 h-4 inline mr-2" />
@@ -149,12 +130,10 @@ export default function Signup() {
                 className="glass-input"
                 placeholder="your@email.com"
               />
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
+            <div
+            
             >
               <Label htmlFor="phone" className="text-foreground text-base mb-2 block">
                 <Phone className="w-4 h-4 inline mr-2" />
@@ -169,12 +148,10 @@ export default function Signup() {
                 className="glass-input"
                 placeholder="+1 (555) 000-0000"
               />
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
+            <div
+             
             >
               <Label htmlFor="password" className="text-foreground text-base mb-2 block">
                 <Lock className="w-4 h-4 inline mr-2" />
@@ -190,12 +167,10 @@ export default function Signup() {
                 className="glass-input"
                 placeholder="Create a secure password"
               />
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
+            <div
+             
               className="pt-2"
             >
               <Button
@@ -205,13 +180,11 @@ export default function Signup() {
               >
                 {loading ? "Creating Account..." : "Continue"}
               </Button>
-            </motion.div>
+            </div>
           </form>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
+          <p
+           
             className="text-center text-sm text-muted-foreground mt-6"
           >
             Already have an account?{" "}
@@ -221,9 +194,9 @@ export default function Signup() {
             >
               Sign in
             </button>
-          </motion.p>
+          </p>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import {  ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,9 +50,8 @@ export default function Login() {
     <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-gradient-to-b from-gold/10 via-transparent to-accent/10 pointer-events-none" />
       
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+      <div
+        
         className="relative z-10 w-full max-w-md"
       >
         <Button
@@ -126,7 +124,7 @@ export default function Login() {
             </p>
           </form>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
