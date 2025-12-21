@@ -13,7 +13,7 @@ export default function DashboardNav({ isMobile }: { isMobile?: boolean }) {
     {isMobile ? (
           <nav
         className="
-          md:hidden
+          lg:hidden
           fixed bottom-0 left-0 right-0
           z-50
           bg-background
@@ -25,8 +25,7 @@ export default function DashboardNav({ isMobile }: { isMobile?: boolean }) {
         <div className="h-16 flex items-center justify-between max-w-md mx-auto">
           {DASHBOARD_NAV.map((item) => {
             const isActive =
-              pathname === item.href ||
-              pathname.startsWith(item.href + "/");
+              pathname === item.href;
 
             return (
               <Link
@@ -49,11 +48,10 @@ export default function DashboardNav({ isMobile }: { isMobile?: boolean }) {
         </div>
       </nav>
     ) : (
-      <nav className="hidden md:flex flex-1 px-4 py-6 space-y-1 flex-col">
+      <nav className="hidden lg:flex flex-1 px-4 py-6 space-y-1 flex-col">
         {DASHBOARD_NAV.map((item) => {
           const isActive =
-            pathname === item.href ||
-            pathname.startsWith(item.href + "/");
+            pathname === item.href
 
           return (
             <Link

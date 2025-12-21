@@ -3,8 +3,9 @@ import {
   Home,
   Calendar,
   // Users,
-  Bell,
-  Settings
+  // Bell,
+  Settings,
+  Armchair
 } from "lucide-react";
 
 export const DASHBOARD_NAV = [
@@ -18,16 +19,16 @@ export const DASHBOARD_NAV = [
     href: "/barber/dashboard/schedule",
     icon: Calendar,
   },
-  // {
-  //   label: "Clients",
-  //   href: "/barber/dashboard/clients",
-  //   icon: Users,
-  // },
   {
-    label: "Notifications",
-    href: "/barber/dashboard/notifications",
-    icon: Bell,
+    label: "Chairs",
+    href: "/barber/dashboard/chairs",
+    icon: Armchair,
   },
+  // {
+  //   label: "Notifications",
+  //   href: "/barber/dashboard/notifications",
+  //   icon: Bell,
+  // },
   {
     label: "Settings",
     href: "/barber/dashboard/settings",
