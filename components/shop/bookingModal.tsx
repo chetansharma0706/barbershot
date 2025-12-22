@@ -205,7 +205,7 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
                       }`}
                     >
                       <span className="text-xs font-medium uppercase">{d.day}</span>
-                      <span className="text-xl font-bold">{d.date.split(' ')[0]}</span>
+                      <span className="text-xl font-bold">{d.date}</span>
                     </button>
                   ))}
                 </div>
