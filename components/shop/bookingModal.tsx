@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, CheckCircle2, Armchair } from "lucide-react"; 
+import { X, CheckCircle2, Armchair, User, Phone } from "lucide-react"; 
 import { Button } from "../ui/button";
 
 type BookingModalProps = {
@@ -8,12 +8,11 @@ type BookingModalProps = {
   shopName: string;
 };
 
-// --- Mock Data: Booked Slots (Replace this with data from Supabase) ---
-// Structure: Date string matching the UI format, Time string, and Chair ID
+// --- Mock Data: Booked Slots ---
 const bookedSlots = [
-  { date: "22 Dec", time: "11:30", chairId: 1 }, // Chair 1 is booked at 11:30
+  { date: "22 Dec", time: "11:30", chairId: 1 }, 
   { date: "22 Dec", time: "14:30", chairId: 1 }, 
-  { date: "23 Dec", time: "10:00", chairId: 2 }, // Chair 2 is booked tomorrow
+  { date: "23 Dec", time: "10:00", chairId: 2 }, 
 ];
 
 // --- Helper: Generate next 4 days ---
@@ -24,17 +23,14 @@ const getNextDays = (daysCount: number) => {
   for (let i = 0; i < daysCount; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
-    
-    // Format: "Tue", "14 Oct"
     const dayName = i === 0 ? "Today" : date.toLocaleDateString("en-US", { weekday: 'short' });
     const dateStr = date.toLocaleDateString("en-US", { day: 'numeric', month: 'short' });
-    
     days.push({ day: dayName, date: dateStr, fullDate: date });
   }
   return days;
 };
 
-// --- Helper: Generate Time Slots based on Working Hours & Availability ---
+// --- Helper: Generate Time Slots ---
 const generateTimeSlots = (
   startHour: number, 
   endHour: number, 
@@ -44,60 +40,50 @@ const generateTimeSlots = (
 ) => {
   const slots = [];
   let currentTime = new Date();
-  currentTime.setHours(startHour, 0, 0, 0); // Start at opening time
-
+  currentTime.setHours(startHour, 0, 0, 0); 
   const endTime = new Date();
-  endTime.setHours(endHour, 0, 0, 0); // End at closing time
-
-  // Get current real time to filter out past slots for "Today"
+  endTime.setHours(endHour, 0, 0, 0); 
   const now = new Date();
-  
-  // Check if the selected date in UI matches today's date
   const todayStr = now.toLocaleDateString("en-US", { day: 'numeric', month: 'short' });
   const isToday = selectedDateStr === todayStr;
 
   while (currentTime < endTime) {
     const timeString = currentTime.toLocaleTimeString("en-US", { 
-      hour: '2-digit', 
-      minute: '2-digit', 
-      hour12: false 
+      hour: '2-digit', minute: '2-digit', hour12: false 
     });
 
-    // 1. Check if slot is in the past (only applies if selected date is Today)
     let isPast = false;
     if (isToday) {
       const slotTimeDate = new Date();
       slotTimeDate.setHours(currentTime.getHours(), currentTime.getMinutes(), 0, 0);
-      if (slotTimeDate < now) {
-        isPast = true;
-      }
+      if (slotTimeDate < now) isPast = true;
     }
 
-    // 2. Check if slot is already booked
-    // We filter based on: Same Date AND Same Time AND Same Chair
     const isBooked = bookedSlots.some(
       (booking) => 
         booking.date === selectedDateStr && 
-        booking.time === timeString &&
+        booking.time === timeString && 
         booking.chairId === selectedChairId
     );
 
-    // Only add to available slots if it's NOT in the past and NOT booked
-    if (!isPast && !isBooked) {
-      slots.push(timeString);
-    }
-
-    // Increment time by interval
+    if (!isPast && !isBooked) slots.push(timeString);
     currentTime.setMinutes(currentTime.getMinutes() + intervalMinutes);
   }
   return slots;
 };
 
 const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
+  // Steps: 1 = Selection, 2 = User Info (if new), 3 = Success
   const [step, setStep] = useState(1);
+  
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedChair, setSelectedChair] = useState<number | null>(null);
+
+  // User Info State
+  const [userName, setUserName] = useState("");
+  const [userPhone, setUserPhone] = useState("");
+  const [isReturningUser, setIsReturningUser] = useState(false);
 
   const chairs = [
     { id: 1, name: "Chair 1", barber: "Alex" },
@@ -105,51 +91,81 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
     { id: 3, name: "Chair 3", barber: "Mike" },
   ];
 
-  // Dynamic Date Data
   const dates = getNextDays(4); 
-  
-  // Dynamic Time Data (Recalculates when Date or Chair changes)
-  const availableTimes = generateTimeSlots(
-    10, // Open 10:00
-    20, // Close 20:00
-    45, // 45 min slots
-    selectedDate, 
-    selectedChair
-  );
+  const availableTimes = generateTimeSlots(10, 20, 45, selectedDate, selectedChair);
 
+  // --- Effect: Handle Modal Open/Close & Local Storage ---
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      // Check Local Storage
+      const storedData = localStorage.getItem("barberAppUser");
+      if (storedData) {
+        const { name, phone } = JSON.parse(storedData);
+        setUserName(name);
+        setUserPhone(phone);
+        setIsReturningUser(true);
+      } else {
+        setIsReturningUser(false);
+        setUserName("");
+        setUserPhone("");
+      }
+
+      // Default Date Selection
+      if (!selectedDate && dates.length > 0) {
+        setSelectedDate(dates[0].date);
+      }
+    } else {
+      // Reset State on Close
       setStep(1);
       setSelectedDate(null);
       setSelectedTime(null);
       setSelectedChair(null);
     }
-  }, [isOpen]);
+  }, [isOpen]); // Removed 'dates' from dependency to prevent loop
 
-  // Auto-select "Today" when modal opens
-  useEffect(() => {
-    if (isOpen && !selectedDate && dates.length > 0) {
-      setSelectedDate(dates[0].date);
+  // --- Handlers ---
+
+  const handleInitialConfirm = () => {
+    if (isReturningUser) {
+      // If user exists, skip to booking success
+      finalizeBooking();
+    } else {
+      // If new user, go to Info Form
+      setStep(2);
     }
-  }, [isOpen, dates]);
+  };
+
+  const handleUserInfoSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Save to Local Storage
+    localStorage.setItem("barberAppUser", JSON.stringify({ name: userName, phone: userPhone }));
+    setIsReturningUser(true);
+    finalizeBooking();
+  };
+
+  const finalizeBooking = () => {
+    // Here you would typically send data to backend (Supabase)
+    // payload: { name: userName, phone: userPhone, date: selectedDate, time: selectedTime, chair: selectedChair }
+    setStep(3);
+  };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
       
-      {/* Modal Content */}
       <div className="relative w-full max-w-md bg-card border-t sm:border border-border sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-300">
         
         {/* Header */}
         <div className="p-6 border-b border-border flex justify-between items-center bg-glass-bg">
           <div>
-            <h3 className="text-xl font-bold text-gold">Book Appointment</h3>
+            <h3 className="text-xl font-bold text-gold">
+              {step === 2 ? "Your Details" : "Book Appointment"}
+            </h3>
             <p className="text-sm text-muted-foreground">at {shopName}</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-muted transition-colors text-foreground">
@@ -159,10 +175,11 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
 
         {/* Body */}
         <div className="p-6 max-h-[70vh] overflow-y-auto">
-          {step === 1 ? (
+          
+          {/* STEP 1: Selection */}
+          {step === 1 && (
             <div className="space-y-6">
-              
-              {/* 1. Chair Selection */}
+              {/* Chair Selection */}
               <div>
                 <label className="text-sm font-medium mb-3 block text-foreground">Select Chair / Barber</label>
                 <div className="grid grid-cols-3 gap-3">
@@ -171,7 +188,7 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
                       key={chair.id}
                       onClick={() => {
                         setSelectedChair(chair.id);
-                        setSelectedTime(null); // Reset time if chair changes (availablity might differ)
+                        setSelectedTime(null);
                       }}
                       className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
                         selectedChair === chair.id
@@ -187,7 +204,7 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
                 </div>
               </div>
 
-              {/* 2. Date Selection (Disabled until chair is picked) */}
+              {/* Date Selection */}
               <div className={`${!selectedChair ? 'opacity-50 pointer-events-none grayscale' : ''} transition-all duration-300`}>
                 <label className="text-sm font-medium mb-3 block text-foreground">Select Date</label>
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -196,7 +213,7 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
                       key={i}
                       onClick={() => {
                         setSelectedDate(d.date);
-                        setSelectedTime(null); // Reset time if date changes
+                        setSelectedTime(null);
                       }}
                       className={`flex-shrink-0 w-20 h-20 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all ${
                         selectedDate === d.date 
@@ -205,18 +222,15 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
                       }`}
                     >
                       <span className="text-xs font-medium uppercase">{d.day}</span>
-                      <span className="text-xl font-bold">{d.date}</span>
+                      <span className="text-lg font-bold">{d.date}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* 3. Time Selection (Disabled until date is picked) */}
+              {/* Time Selection */}
               <div className={`${!selectedChair || !selectedDate ? 'opacity-50 pointer-events-none' : ''} transition-all duration-300`}>
-                <label className="text-sm font-medium mb-3 block text-foreground">
-                  Available Slots 
-                </label>
-                
+                <label className="text-sm font-medium mb-3 block text-foreground">Available Slots</label>
                 {availableTimes.length > 0 ? (
                   <div className="grid grid-cols-4 gap-3">
                     {availableTimes.map((t) => (
@@ -234,7 +248,6 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
                     ))}
                   </div>
                 ) : (
-                  // Empty State for NO SLOTS
                    <div className="text-center py-6 border border-dashed border-border rounded-xl bg-muted/20">
                       <p className="text-sm text-muted-foreground">
                         {selectedChair && selectedDate 
@@ -245,15 +258,61 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
                 )}
               </div>
             </div>
-          ) : (
-            // Success State
+          )}
+
+          {/* STEP 2: User Details Form (New User Only) */}
+          {step === 2 && (
+            <form id="user-info-form" onSubmit={handleUserInfoSubmit} className="space-y-6 animate-in slide-in-from-right duration-300">
+              <div className="bg-gold/10 border border-gold/20 p-4 rounded-xl mb-4">
+                <p className="text-sm text-gold font-medium text-center">
+                  Almost there! We just need your details to confirm the booking.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Full Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter your name"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      className="w-full h-10 pl-10 pr-3 rounded-lg border border-border bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50 placeholder:text-muted-foreground/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="tel"
+                      required
+                      placeholder="Enter phone number"
+                      value={userPhone}
+                      onChange={(e) => setUserPhone(e.target.value)}
+                      className="w-full h-10 pl-10 pr-3 rounded-lg border border-border bg-input text-foreground focus:outline-none focus:ring-2 focus:ring-gold/50 placeholder:text-muted-foreground/50"
+                    />
+                  </div>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* STEP 3: Success */}
+          {step === 3 && (
             <div className="flex flex-col items-center justify-center py-10 space-y-4 text-center animate-in zoom-in-95 duration-300">
               <div className="w-20 h-20 rounded-full bg-gold/20 flex items-center justify-center mb-2">
                 <CheckCircle2 className="w-10 h-10 text-gold" />
               </div>
               <h3 className="text-2xl font-bold text-foreground">Booking Confirmed!</h3>
               <p className="text-muted-foreground">
-                Reserved with <strong className="text-foreground">{chairs.find(c => c.id === selectedChair)?.barber}</strong><br/>
+                Reserved for <strong className="text-foreground">{userName}</strong><br/>
+                with <strong className="text-foreground">{chairs.find(c => c.id === selectedChair)?.barber}</strong><br/>
                 on <strong className="text-foreground">{selectedDate}</strong> at <strong className="text-foreground">{selectedTime}</strong>.
               </p>
             </div>
@@ -262,15 +321,28 @@ const BookingModal = ({ isOpen, onClose, shopName }: BookingModalProps) => {
 
         {/* Footer */}
         <div className="p-6 border-t border-border bg-glass-bg">
-          {step === 1 ? (
+          {step === 1 && (
             <Button 
               className="w-full mobile-button" 
-              onClick={() => { if(selectedDate && selectedTime && selectedChair) setStep(2); }}
+              onClick={handleInitialConfirm}
               disabled={!selectedDate || !selectedTime || !selectedChair}
             >
               Confirm Booking
             </Button>
-          ) : (
+          )}
+
+          {step === 2 && (
+            <Button 
+              type="submit"
+              form="user-info-form"
+              className="w-full mobile-button" 
+              disabled={!userName || userPhone.length < 10}
+            >
+              Complete Booking
+            </Button>
+          )}
+
+          {step === 3 && (
             <Button className="w-full mobile-button" variant="outline" onClick={onClose}>
               Done
             </Button>
