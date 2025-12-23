@@ -10,8 +10,6 @@ type BookingModalProps = {
   onClose: () => void;
   shopName: string;
   shopId?: string;
-
-  
 };
 
 const supabase = createClient();
@@ -114,6 +112,7 @@ export default function BookingModal({
   };
 
   useEffect(() => {
+    console.log("BookingModal useEffect triggered:", { isOpen, shopId });
     if (!isOpen || !shopId) return;
 
     const fetchData = async () => {
@@ -134,6 +133,8 @@ export default function BookingModal({
         .select("*")
         .eq("shop_id", shopId);
 
+      console.log("Fetched booked slots:", booked); 
+      console.log("Fetched stations:", stationData);
       setBookedSlots(booked || []);
       setChairs(stationData || []);
       setSelectedDate(getNextDays(4)[0].dateObj);
