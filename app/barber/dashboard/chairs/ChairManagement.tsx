@@ -16,7 +16,6 @@ import { ResponsiveOverlay } from "@/components/OverlayModal";
 import { useImageKit } from "@/hooks/useImageKit";
 import { toast } from "sonner";
 import { useDashboard } from "../dashboardContext";
-import { Image } from "@imagekit/next";
 import { createClient } from "@/utils/supabase/client";
 import { InputProps } from "@/types";
 
@@ -326,7 +325,9 @@ export default function ChairsPage({ chairsPromise }: { chairsPromise: Promise<C
             ))}
 
             <button
-              onClick={() => setOpen(true)}
+              onClick={() => {
+                setEditing(null);
+                setOpen(true)}}
               className="flex min-h-[140px] items-center justify-center rounded-xl border border-dashed text-muted-foreground"
             >
               <Plus className="mr-2 h-5 w-5" /> Add Chair

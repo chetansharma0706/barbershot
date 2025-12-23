@@ -25,7 +25,9 @@ experimental: {
    serverActions: {
       allowedOrigins: [
       'localhost:3000', // Allow local development
-      'expert-guacamole-5gg7jxw6g5pgh79pw-3000.app.github.dev', // Allow your specific GitHub Codespaces URL
+      'expert-guacamole-5gg7jxw6g5pgh79pw-3000.app.github.dev',
+      'bookish-fortnight-v67765pg67rxcxgw-3000.app.github.dev',
+       // Allow your specific GitHub Codespaces URL
       // If you are using a different codespaces URL format, add it here too.
       // e.g., '*.app.github.dev' with appropriate security caution
     ],
