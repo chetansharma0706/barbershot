@@ -124,7 +124,7 @@ const BookingModal = ({ isOpen, onClose, shopName, shopId}: BookingModalProps) =
         const { data: stationData } = await supabase
           .from('stations')
           .select('*')
-          .eq('barber_shop_id', shopId);
+          .eq('shop_id', shopId);
           
         if(stationData) setChairs(stationData);
         
