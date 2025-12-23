@@ -10,6 +10,8 @@ type BookingModalProps = {
   onClose: () => void;
   shopName: string;
   shopId?: string;
+
+  
 };
 
 const supabase = createClient();
