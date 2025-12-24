@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { X, CheckCircle2, Armchair, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { createClient } from "@/utils/supabase/client";
+import { fetchBookingModalData } from "@/app/actions/fetchBookingData";
+import { bookAppointment } from "@/app/actions/bookAppointment";
 
 /* ====================== TYPES ====================== */
 
@@ -174,7 +176,7 @@ export default function BookingModal({
   // Memoized values
   const dates = useMemo(() => getNextDays(DAYS_TO_SHOW), []);
   
-  const supabase = useMemo(() => createClient(), []);
+  // const supabase = useMemo(() => createClient(), []);
 
   const availableSlots = useMemo(
     () => generateAvailableSlots(selectedDate, selectedChair, bookedSlots),
@@ -215,30 +217,21 @@ export default function BookingModal({
       endDate.setDate(startDate.getDate() + DAYS_TO_SHOW);
 
       // Parallel data fetching for better performance
-      const [bookedSlotsResponse, stationsResponse] = await Promise.all([
-        supabase.rpc("get_booked_slots", {
-          target_shop_id: shopId,
-          query_start_time: startDate.toISOString(),
-          query_end_time: endDate.toISOString(),
-        }),
-        supabase
-          .from("stations")
-          .select("id, name, station_image_url, is_active")
-          .eq("shop_id", shopId)
-          .eq("is_active", true),
-      ]);
+     fetchBookingModalData(shopId).then(({ bookedSlots, stations }) => {
+   
+       const transformedChairs: Chair[] =
+         stations.map((station) => ({
+           id: station.id,
+           name: station.name,
+           imgUrl: station.station_image_url || undefined,
+           isAvailable: station.is_active,
+         })) || [];
+     
+       setBookedSlots(bookedSlots || []);
+       setChairs(transformedChairs);
+  });
 
       // Transform station data
-      const transformedChairs: Chair[] =
-        stationsResponse.data?.map((station) => ({
-          id: station.id,
-          name: station.name,
-          imgUrl: station.station_image_url || undefined,
-          isAvailable: station.is_active,
-        })) || [];
-
-      setBookedSlots(bookedSlotsResponse.data || []);
-      setChairs(transformedChairs);
       
       // Auto-select first date
       if (dates.length > 0) {
@@ -250,7 +243,7 @@ export default function BookingModal({
     } finally {
       setLoading(false);
     }
-  }, [shopId, supabase, dates]);
+  }, [shopId, dates]);
 
   /**
    * Load user info from localStorage
@@ -300,18 +293,14 @@ export default function BookingModal({
       const endTime = new Date(startTime.getTime() + BOOKING_DURATION_MINUTES * 60000);
 
       // Insert booking
-      const { error } = await supabase.from("appointments").insert({
-        barber_shop_id: shopId,
-        station_id: selectedChair,
-        customer_name: userName.trim(),
-        customer_phone: userPhone.trim(),
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
-        status: "booked",
-      });
-
-      if (error) throw error;
-
+      await bookAppointment({
+      shopId,
+      stationId: selectedChair,
+      customerName: userName,
+      customerPhone: userPhone,
+      startTimeISO: startTime.toISOString(),
+      endTimeISO: endTime.toISOString(),
+    });
       // Save user info for next time
       saveUserInfo({ name: userName.trim(), phone: userPhone.trim() });
 
@@ -329,7 +318,6 @@ export default function BookingModal({
     shopId,
     userName,
     userPhone,
-    supabase,
   ]);
 
   /**

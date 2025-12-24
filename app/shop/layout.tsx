@@ -21,17 +21,17 @@ export default async function ShopLayout({
     subdomain !== "www" &&
     subdomain !== "barberbro";
 
-  if (!isShopSubdomain) {
-    notFound();
-  }
-  // const subdomaintemp = "royalcuts" //--- TEMP FIX FOR TESTING ---
+  // if (!isShopSubdomain) {
+  //   notFound();
+  // }
+  const subdomaintemp = "royalcuts" //--- TEMP FIX FOR TESTING ---
 
   const supabase = await createClient();
 
   const { data: shop, error } = await supabase
     .from("barber_shops")
     .select("*")
-    .eq("subdomain", subdomain)
+    .eq("subdomain", subdomaintemp)
     .eq("is_active", true)
     .single();
 

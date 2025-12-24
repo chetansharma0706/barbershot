@@ -4,26 +4,19 @@
 import { createClient } from '@/utils/supabase/server'
 
 export async function getChairs() {
-    
+
     // Define how long this data stays fresh (matches your 30s logic)
-    
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
     if (!user) {
-        throw new Error("Failed to authenticate user");
+        throw new Error('Unauthorized');
     }
 
-    // Assign a tag for manual revalidation (e.g., when adding a chair)
     const { data: shop } = await supabase
-        .from("barber_shops")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-    if (!shop) {
-        throw new Error("Failed to find shop for user");
-    }
+        .from('barber_shops')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
 
     const { data, error } = await supabase
         .from('stations')
