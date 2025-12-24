@@ -29,6 +29,7 @@ export default async function middleware(request: NextRequest) {
   const isMainDomain = !isShopSubdomain;
 
   // 3️⃣ BLOCK direct access to /shop on main domain
+  // add this line here && pathname.startsWith("/shop")
   if (isMainDomain && pathname.startsWith("/shop")) {
     return NextResponse.redirect(new URL("/", request.url));
   }

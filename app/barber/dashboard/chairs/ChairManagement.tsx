@@ -413,6 +413,7 @@ export default function ChairsPage({ chairsPromise }: { chairsPromise: Promise<C
               <div className="ml-2 animate-spin rounded-full border-2 border-b-transparent border-white h-4 w-4"></div>
             )}
           </Button>
+         
         </div>
       </ResponsiveOverlay>
     </div>

@@ -12,6 +12,15 @@ type BookingModalProps = {
   shopId?: string;
 };
 
+type chair = {
+  id: string;
+  name: string;
+  imgUrl?: string;
+  isAvailable: boolean;
+}
+
+
+
 const supabase = createClient();
 
 /* ----------------------- Helpers ----------------------- */
@@ -95,7 +104,7 @@ export default function BookingModal({
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedChair, setSelectedChair] = useState<string | null>(null);
 
-  const [chairs, setChairs] = useState<any[]>([]);
+  const [chairs, setChairs] = useState<chair[]>([]);
   const [bookedSlots, setBookedSlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -130,13 +139,22 @@ export default function BookingModal({
 
       const { data: stationData } = await supabase
         .from("stations")
-        .select("*")
-        .eq("shop_id", shopId);
+        .select("id, name, station_image_url, is_active")
+        .eq("shop_id", shopId).filter("is_active", "eq", true);
 
-      console.log("Fetched booked slots:", booked); 
-      console.log("Fetched stations:", stationData);
+      const chairsData = stationData?.map((s) => ({
+        id: s.id,
+        name: s.name,
+        imgUrl: s.station_image_url || undefined,
+        isAvailable: s.is_active,
+      })) || [];
+
+
+
+      console.log("Fetched booked slots:", booked);
+      console.log("Fetched stations:", chairsData);
       setBookedSlots(booked || []);
-      setChairs(stationData || []);
+      setChairs(chairsData);
       setSelectedDate(getNextDays(4)[0].dateObj);
       setLoading(false);
     };
@@ -188,6 +206,8 @@ export default function BookingModal({
 
   if (!isOpen) return null;
 
+
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div
@@ -216,152 +236,195 @@ export default function BookingModal({
             <X />
           </button>
         </div>
-
-        {/* Body */}
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-          {step === 1 && (
-            <>
-              {/* Chairs */}
-              <div>
-                <label className="text-sm font-medium">Select Chair</label>
-                <div className="grid grid-cols-3 gap-3 mt-2">
-                  {chairs.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        setSelectedChair(c.id);
-                        setSelectedTime(null);
-                      }}
-                      className={`p-3 rounded-xl border ${
-                        selectedChair === c.id
-                          ? "border-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      <Armchair className="mx-auto mb-1" />
-                      <span className="text-xs">{c.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div className={!selectedChair ? "opacity-50 pointer-events-none" : ""}>
-                <label className="text-sm font-medium">Select Date</label>
-                <div className="flex gap-3 mt-2 overflow-x-auto">
-                  {dates.map((d, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        setSelectedDate(d.dateObj);
-                        setSelectedTime(null);
-                      }}
-                      className={`w-20 h-20 rounded-xl border ${
-                        selectedDate?.toDateString() ===
-                        d.dateObj.toDateString()
-                          ? "border-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      <div className="text-xs">{d.label}</div>
-                      <div className="font-bold">{d.display}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Slots */}
+        {loading ? (
+          <div className="p-6 flex justify-center items-center max-h-[70vh]">
+            <div className="flex items-center justify-center min-h-screen bg-transparent">
               <div
-                className={
-                  !selectedChair || !selectedDate
-                    ? "opacity-50 pointer-events-none"
-                    : ""
-                }
-              >
-                <label className="text-sm font-medium">Available Slots</label>
-                <div className="grid grid-cols-4 gap-3 mt-2">
-                  {availableSlots.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setSelectedTime(t)}
-                      className={`py-2 rounded-lg border ${
-                        selectedTime === t
-                          ? "border-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === 2 && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                localStorage.setItem(
-                  "barberAppUser",
-                  JSON.stringify({ name: userName, phone: userPhone })
-                );
-                finalizeBooking();
-              }}
-              className="space-y-4"
-            >
-              <input
-                required
-                placeholder="Full Name"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                className="w-full h-10 border rounded-lg px-3"
+                role="status"
+                aria-label="Loading"
+                className="w-10 h-10 rounded-full border-4 border-gold border-t-black animate-spin"
+                style={{ animationDuration: "0.6s" }}
               />
-              <input
-                required
-                placeholder="Phone"
-                value={userPhone}
-                onChange={(e) => setUserPhone(e.target.value)}
-                className="w-full h-10 border rounded-lg px-3"
-              />
-            </form>
-          )}
-
-          {step === 3 && (
-            <div className="text-center py-10">
-              <CheckCircle2 className="mx-auto mb-4" size={48} />
-              <h3 className="text-xl font-bold">Booking Confirmed</h3>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
 
-        {/* Footer */}
-        <div className="p-6 border-t">
-          {step === 1 && (
-            <Button
-              className="w-full"
-              disabled={!selectedDate || !selectedTime || !selectedChair}
-              onClick={() =>
-                isReturningUser ? finalizeBooking() : setStep(2)
-              }
-            >
-              Confirm Booking
-              {loading && <span className="ml-2 loading-spinner" />}
-            </Button>
-          )}
-          {step === 2 && (
-            <Button className="w-full" onClick={finalizeBooking}>
-              Complete Booking
-              {loading && <span className="ml-2 loading-spinner" />}
-            </Button>
-          )}
-          {step === 3 && (
-            <Button className="w-full" variant="outline" onClick={onClose}>
-              Done
-              {loading && <span className="ml-2 loading-spinner" />}
-            </Button>
-          )}
-        </div>
+          <>
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              {step === 1 && (
+                <>
+                  {/* Chairs */}
+                  <div>
+                    <label className="text-sm font-medium">Select Chair</label>
+                    {/* Changed grid-cols-3 to grid-cols-2 for a cleaner, wider layout */}
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      {chairs.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => {
+                            setSelectedChair(c.id);
+                            setSelectedTime(null);
+                          }}
+                          // Flex container for side-by-side layout
+                          className={`
+          relative flex items-center gap-3 p-3 rounded-xl border text-left transition-all
+          ${selectedChair === c.id
+                              ? "border-primary bg-primary/10 ring-1 ring-primary"
+                              : "border-border bg-card hover:border-primary/50"
+                            }
+        `}
+                        >
+                          {/* 1. Image/Icon Container (Avatar style) */}
+                          <div className={`
+          w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden border border-border/50
+          ${selectedChair === c.id ? "bg-primary/20" : "bg-muted"}
+        `}>
+                            {c.imgUrl ? (
+                              <img
+                                src={c.imgUrl}
+                                alt={c.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              // Fallback icon if no image
+                              <Armchair className={`w-5 h-5 ${selectedChair === c.id ? "text-primary" : "text-muted-foreground"}`} />
+                            )}
+                          </div>
+
+                          {/* 2. Text Info */}
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-semibold truncate">{c.name}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Barber</span>
+                          </div>
+
+                          {/* 3. Checkmark (Visible only when selected) */}
+                          {selectedChair === c.id && (
+                            <div className="absolute top-2 right-2 text-primary">
+                              <CheckCircle2 className="w-3 h-3" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Dates */}
+                  <div className={!selectedChair ? "opacity-50 pointer-events-none" : ""}>
+                    <label className="text-sm font-medium">Select Date</label>
+                    <div className="flex gap-3 mt-2 overflow-x-auto">
+                      {dates.map((d, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setSelectedDate(d.dateObj);
+                            setSelectedTime(null);
+                          }}
+                          className={`w-20 h-20 rounded-xl border ${selectedDate?.toDateString() ===
+                            d.dateObj.toDateString()
+                            ? "border-primary bg-primary/10"
+                            : "border-border"
+                            }`}
+                        >
+                          <div className="text-xs">{d.label}</div>
+                          <div className="font-bold">{d.display}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Slots */}
+                  <div
+                    className={
+                      !selectedChair || !selectedDate
+                        ? "opacity-50 pointer-events-none"
+                        : ""
+                    }
+                  >
+                    <label className="text-sm font-medium">Available Slots</label>
+                    <div className="grid grid-cols-4 gap-3 mt-2">
+                      {availableSlots.map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setSelectedTime(t)}
+                          className={`py-2 rounded-lg border ${selectedTime === t
+                            ? "border-primary bg-primary/10"
+                            : "border-border"
+                            }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {step === 2 && (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    localStorage.setItem(
+                      "barberAppUser",
+                      JSON.stringify({ name: userName, phone: userPhone })
+                    );
+                    finalizeBooking();
+                  }}
+                  className="space-y-4"
+                >
+                  <input
+                    required
+                    placeholder="Full Name"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className="w-full h-10 border rounded-lg px-3"
+                  />
+                  <input
+                    required
+                    placeholder="Phone"
+                    value={userPhone}
+                    onChange={(e) => setUserPhone(e.target.value)}
+                    className="w-full h-10 border rounded-lg px-3"
+                  />
+                </form>
+              )}
+
+              {step === 3 && (
+                <div className="text-center py-10">
+                  <CheckCircle2 className="mx-auto mb-4" size={48} />
+                  <h3 className="text-xl font-bold">Booking Confirmed</h3>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t">
+              {step === 1 && (
+                <Button
+                  className="w-full"
+                  disabled={!selectedDate || !selectedTime || !selectedChair}
+                  onClick={() =>
+                    isReturningUser ? finalizeBooking() : setStep(2)
+                  }
+                >
+                  Confirm Booking
+                  {loading && <span className="ml-2 loading-spinner" />}
+                </Button>
+              )}
+              {step === 2 && (
+                <Button className="w-full" onClick={finalizeBooking}>
+                  Complete Booking
+                  {loading && <span className="ml-2 loading-spinner" />}
+                </Button>
+              )}
+              {step === 3 && (
+                <Button className="w-full" variant="outline" onClick={onClose}>
+                  Done
+                  {loading && <span className="ml-2 loading-spinner" />}
+                </Button>
+              )}
+            </div>
+          </>
+        )}
+
       </div>
     </div>
   );

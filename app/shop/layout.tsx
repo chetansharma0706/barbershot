@@ -24,6 +24,7 @@ export default async function ShopLayout({
   if (!isShopSubdomain) {
     notFound();
   }
+  // const subdomaintemp = "royalcuts" //--- TEMP FIX FOR TESTING ---
 
   const supabase = await createClient();
 
