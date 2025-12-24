@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { X, CheckCircle2, Armchair, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
-import { createClient } from "@/utils/supabase/client";
 import { fetchBookingModalData } from "@/app/actions/fetchBookingData";
 import { bookAppointment } from "@/app/actions/bookAppointment";
 
@@ -226,6 +225,10 @@ export default function BookingModal({
            imgUrl: station.station_image_url || undefined,
            isAvailable: station.is_active,
          })) || [];
+
+         console.log("Fetched booked slots:", bookedSlots);
+         console.log("Fetched stations:", stations);
+         console.log("Transformed chairs:", transformedChairs);
      
        setBookedSlots(bookedSlots || []);
        setChairs(transformedChairs);
