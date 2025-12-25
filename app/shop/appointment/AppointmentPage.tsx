@@ -4,7 +4,7 @@ import { useShop } from "../shopContext";
 
 export default async function AppointmentPage() {
 
-  const shop = useShop();
+  const {shop} = useShop();
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-white">
       <div className="w-full max-w-md bg-neutral-900 rounded-xl p-6 shadow-lg">
