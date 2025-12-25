@@ -24,23 +24,52 @@ export default async function ShopLayout({
   if (!isShopSubdomain) {
     notFound();
   }
-  // const subdomaintemp = "royalcuts" //--- TEMP FIX FOR TESTING ---
 
   const supabase = await createClient();
 
-  const { data: shop, error } = await supabase
+  // 1. get current user if exists
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let anonUser = user;
+  console.log("Current user:", anonUser);
+
+  // 2. if no user, sign in anonymously
+  if (!anonUser) {
+    const { data, error } = await supabase.auth.signInAnonymously();
+
+    if (error) {
+      console.error("Anonymous sign-in failed", error);
+    } else {
+      anonUser = data.user;
+    }
+  }
+
+  // 3. Fetch shop record
+  const { data: shop, error: shopError } = await supabase
     .from("barber_shops")
     .select("*")
     .eq("subdomain", subdomain)
     .eq("is_active", true)
     .single();
 
-  if (error || !shop) {
+  if (shopError || !shop) {
     notFound();
   }
 
+  // 4. Optional: ensure entry in customers table exists
+  if (anonUser) {
+    await supabase
+      .from("customers")
+      .insert({
+        auth_user_id: anonUser.id,
+        shop_id: shop.id,
+      })
+  }
+
   return (
-    <ShopProvider shop={shop}>
+    <ShopProvider shop={shop} user={anonUser}>
       {children}
     </ShopProvider>
   );
