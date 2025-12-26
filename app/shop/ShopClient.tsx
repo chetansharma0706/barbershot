@@ -23,13 +23,13 @@ export default function ShopClient() {
             auth_user_id: anonUser.id,
             shop_id: shop.id,
           });
-      
+        }
       }else{
         setAnonUser(user);
       }
     };
     fetchAnonUser();
-  }, [supabase]);
+  }, []);
 
 
   return <ShopView shop={shop} user={anonUser} />;
