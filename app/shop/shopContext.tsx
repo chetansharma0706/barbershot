@@ -6,24 +6,19 @@ import { Tables } from "@/database.types";
 
 type Shop = Tables<'barber_shops'>
 
-type ShopContextType = {
-  shop: Shop;
-  user: any;
-};
 
-const ShopContext = createContext<ShopContextType | null>(null);
+const ShopContext = createContext<Shop | null>(null);
 
 export function ShopProvider({
   shop,
-  user,
   children,
 }: {
   shop: Shop;
-  user: any;
+ 
   children: React.ReactNode;
 }) {
   return (
-    <ShopContext.Provider value={{ shop , user}}>
+    <ShopContext.Provider value={ shop }>
       {children}
     </ShopContext.Provider>
   );

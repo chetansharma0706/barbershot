@@ -9,7 +9,7 @@ import BookingModal from "./bookingModal";
 
 type Shop = Tables<'barber_shops'>
 
-export default function ShopPage({ shop }: { shop: Shop | null }) {
+export default function ShopPage({ shop , user }: { shop: Shop | null , user:any }) {
   const [activeTab, setActiveTab] = useState('services');
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
