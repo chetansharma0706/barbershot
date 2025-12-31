@@ -2,13 +2,12 @@
 
 import { Tables } from "@/database.types";
 import { useState, useEffect, useCallback } from "react";
-import { Scissors, MapPin, Clock, Star, ChevronRight, Phone, Calendar } from "lucide-react";
+import { Scissors, MapPin, Clock, Star, ChevronRight, Phone, Calendar, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import BookingModal from "./bookingModal";
-// Import our new Custom Modal
-import CancelModal from "@/components/CancelModal"; 
+import CancelModal from "@/components/CancelModal"; // Ensure this path matches where you saved the file
 import { createClient } from "@/utils/supabase/client";
 
 type Shop = Tables<'barber_shops'>
@@ -39,23 +38,13 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
     if (!user || !shop) return;
     try {
       setIsLoadingAppt(true);
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .maybeSingle();
-
-      if (!customerData) {
-        setIsLoadingAppt(false);
-        return;
-      }
-
+    
       const now = new Date().toISOString();
       const { data: appointment } = await supabase
         .from('appointments')
         .select(`id, start_time, end_time, stations ( name )`)
         .eq('shop_id', shop.id)
-        .eq('customer_id', customerData.id)
+        .eq('customer_id', user.id)
         .gt('end_time', now)
         .order('start_time', { ascending: true })
         .limit(1)
@@ -73,7 +62,6 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
     checkActiveAppointment();
   }, [checkActiveAppointment]);
 
-  // Updated to simply return a promise (handled inside CancelModal)
   const handleCancelAppointment = async () => {
     if (!activeAppointment) return;
 
@@ -101,7 +89,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
   const logoImage = shop?.logo_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Barber";
   const address = shop?.address ? `${shop.address}, ${shop?.city || ''}` : "Location pending";
   const rating = shop?.average_rating || 4.9;
-  const reviews = shop?.total_reviews || 0;
+  const reviewsCount = shop?.total_reviews || 0;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -196,7 +184,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
         </div>
       </div>
 
-      {/* Main Content (Tabs) - Keeping existing logic */}
+      {/* Main Content (Tabs) */}
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-10 max-w-5xl">
         <div className="flex items-center gap-4 md:gap-8 border-b border-border mb-6 md:mb-8 overflow-x-auto scrollbar-hide">
           {['Services', 'About', 'Reviews'].map((tab) => (
@@ -212,26 +200,128 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
           ))}
         </div>
 
-        {/* Tab Content Placeholder (Shortened for brevity as it didn't change) */}
+        {/* Tab Content */}
         <div className="min-h-[300px] animate-in slide-in-from-bottom-4 duration-500">
+           
+           {/* SERVICES TAB */}
            {activeTab === 'services' && (
              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                {services.map((service) => (
                  <Card key={service.id} className="group cursor-pointer hover:border-gold/40 transition-all active:scale-[0.98] p-4 md:p-5">
-                   {/* ... service card content ... */}
                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1">
-                        <h3 className="text-base font-bold">{service.name}</h3>
-                        <p className="text-sm text-muted-foreground">{service.description}</p>
-                        <Badge className="mt-2"><Clock size={12} className="mr-1"/>{service.duration}</Badge>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-base md:text-lg font-bold group-hover:text-gold transition-colors text-foreground leading-snug">
+                            {service.name}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+                          {service.description}
+                        </p>
+                        <Badge className="flex w-fit items-center gap-1.5 px-2.5 py-1">
+                          <Clock size={12} /> {service.duration}
+                        </Badge>
                       </div>
-                      <ChevronRight className="text-muted-foreground group-hover:text-gold"/>
+                      <div className="ml-3 flex items-center justify-center w-8 h-8 rounded-full bg-input text-muted-foreground group-hover:bg-gold group-hover:text-black transition-all flex-shrink-0">
+                         <ChevronRight size={18} />
+                      </div>
                    </div>
                  </Card>
                ))}
              </div>
            )}
-           {/* ... Other tabs ... */}
+
+           {/* ABOUT TAB */}
+           {activeTab === 'about' && (
+            <div className="space-y-4 md:space-y-6">
+              <Card className="p-5 md:p-6">
+                <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-gold">About Us</h3>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  {shop?.shop_description || "Welcome to our premium barbershop. We are dedicated to providing the best grooming experience using top-quality products and techniques. Sit back, relax, and let our master barbers take care of your style."}
+                </p>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                <Card className="flex items-start gap-3 md:gap-4 p-4 md:p-5">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-input flex items-center justify-center text-gold flex-shrink-0">
+                    <MapPin size={20} className="md:w-6 md:h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-foreground mb-1 text-sm md:text-base">Visit Us</h4>
+                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed break-words">{address}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{shop?.zip_code}</p>
+                  </div>
+                </Card>
+                
+                <Card className="flex items-start gap-3 md:gap-4 p-4 md:p-5">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-input flex items-center justify-center text-gold flex-shrink-0">
+                    <Phone size={20} className="md:w-6 md:h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-foreground mb-1 text-sm md:text-base">Contact</h4>
+                    <p className="text-xs md:text-sm text-muted-foreground break-words">{shop?.phone || "No phone listed"}</p>
+                  </div>
+                </Card>
+              </div>
+
+               <Card className="p-5 md:p-6">
+                  <h3 className="font-bold mb-3 md:mb-4 flex items-center gap-2 text-foreground text-base md:text-lg">
+                    <Clock size={18} className="text-gold" /> Business Hours
+                  </h3>
+                  <div className="space-y-2.5 md:space-y-3 text-sm text-muted-foreground">
+                    <div className="flex justify-between items-center border-b border-border pb-2.5">
+                      <span>Mon - Fri</span> 
+                      <span className="font-medium">10:00 AM - 8:00 PM</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-border pb-2.5">
+                      <span>Saturday</span> 
+                      <span className="font-medium">09:00 AM - 6:00 PM</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Sunday</span> 
+                      <span className="text-destructive font-medium">Closed</span>
+                    </div>
+                  </div>
+               </Card>
+            </div>
+           )}
+
+           {/* REVIEWS TAB */}
+           {activeTab === 'reviews' && (
+            <div className="space-y-3 md:space-y-4">
+              <div className="flex items-center gap-4 md:gap-6 mb-4 md:mb-6 p-4 md:p-6 glass-card bg-gold/5 border-gold/20 rounded-lg">
+                 <div className="text-3xl md:text-4xl font-bold text-gold flex-shrink-0">{rating}</div>
+                 <div className="flex-1">
+                    <div className="flex text-gold mb-1.5">
+                      {[1,2,3,4,5].map(i => <Star key={i} size={16} fill="currentColor" />)}
+                    </div>
+                    <p className="text-xs md:text-sm text-muted-foreground">Based on {reviewsCount} reviews</p>
+                 </div>
+              </div>
+
+              {/* Mock Reviews List */}
+              {[1, 2, 3].map((review) => (
+                <Card key={review} className="p-4 md:p-5">
+                  <div className="flex justify-between items-start mb-2 md:mb-3 gap-2">
+                    <div className="flex items-center gap-2">
+                       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                          <User size={14} />
+                       </div>
+                       <div className="font-bold text-foreground text-sm md:text-base">Satisfied Client</div>
+                    </div>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">2 days ago</span>
+                  </div>
+                  <div className="flex text-gold mb-2 md:mb-3 pl-10">
+                      {[1,2,3,4,5].map(i => <Star key={i} size={12} fill="currentColor" />)}
+                  </div>
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed pl-10">
+                    "Great service! The barber really took his time and the atmosphere was amazing. Definitely coming back."
+                  </p>
+                </Card>
+              ))}
+            </div>
+           )}
+
         </div>
       </div>
 
