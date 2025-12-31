@@ -16,11 +16,11 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
   const [activeTab, setActiveTab] = useState('services');
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  
+
   // Appointment State
   const [activeAppointment, setActiveAppointment] = useState<any>(null);
   const [isLoadingAppt, setIsLoadingAppt] = useState(true);
-  
+
   // New State for Custom Cancel Modal
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
 
@@ -38,17 +38,25 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
     if (!user || !shop) return;
     try {
       setIsLoadingAppt(true);
-    
+
       const now = new Date().toISOString();
       const { data: appointment } = await supabase
         .from('appointments')
-        .select(`id, start_time, end_time, stations ( name )`)
+        .select(`
+    id,
+    start_time,
+    end_time,
+    stations!appointments_station_id_fkey (
+      name
+    )
+  `)
         .eq('barber_shop_id', shop.id)
         .eq('customer_id', user.id)
         .gt('end_time', now)
         .order('start_time', { ascending: true })
         .limit(1)
         .maybeSingle();
+
       console.log("Fetched active appointment:", appointment);
       console.log(activeAppointment)
       setActiveAppointment(appointment || null);
@@ -72,7 +80,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
       .eq('id', activeAppointment.id);
 
     if (error) throw error;
-    
+
     // Update local state immediately
     setActiveAppointment(null);
   };
@@ -104,7 +112,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-28 md:pb-0">
-      
+
       {/* Navbar */}
       <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${isScrolled ? 'bg-background/80 backdrop-blur-md border-b border-border py-3' : 'bg-transparent py-4'}`}>
         <div className="container mx-auto px-4 md:px-6 lg:px-8 flex justify-between items-center">
@@ -118,7 +126,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
       {/* Hero Section */}
       <div className="relative h-[45vh] md:h-[50vh] w-full overflow-hidden">
         <div className="absolute inset-0">
-          <img src={bgImage} alt="Shop Interior" className="w-full h-full object-cover"/>
+          <img src={bgImage} alt="Shop Interior" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
           <div className="absolute inset-0 bg-primary/10 mix-blend-overlay" />
         </div>
@@ -158,20 +166,20 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
                     </div>
                     <Badge variant="outline" className="text-[10px] border-gold text-gold bg-gold/10">Confirmed</Badge>
                   </div>
-                  
+
                   <div className="text-sm font-medium mb-3">
                     {formatTime(activeAppointment.start_time)} <span className="text-muted-foreground mx-1">-</span> {formatTime(activeAppointment.end_time)}
                   </div>
-                  
+
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-xs text-muted-foreground truncate">w/ {activeAppointment.stations?.name || "Barber"}</div>
-                    
+
                     {/* TRIGGER CUSTOM MODAL */}
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setIsCancelModalOpen(true)}
-                        className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive p-0 px-2"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsCancelModalOpen(true)}
+                      className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive p-0 px-2"
                     >
                       Cancel
                     </Button>
@@ -192,9 +200,8 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
             <button
               key={tab}
               onClick={() => setActiveTab(tab.toLowerCase())}
-              className={`pb-3 md:pb-4 text-sm md:text-base font-medium transition-all relative whitespace-nowrap ${
-                activeTab === tab.toLowerCase() ? "text-gold border-b-2 border-gold" : "text-muted-foreground hover:text-foreground"
-              }`}
+              className={`pb-3 md:pb-4 text-sm md:text-base font-medium transition-all relative whitespace-nowrap ${activeTab === tab.toLowerCase() ? "text-gold border-b-2 border-gold" : "text-muted-foreground hover:text-foreground"
+                }`}
             >
               {tab}
             </button>
@@ -203,37 +210,37 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
 
         {/* Tab Content */}
         <div className="min-h-[300px] animate-in slide-in-from-bottom-4 duration-500">
-           
-           {/* SERVICES TAB */}
-           {activeTab === 'services' && (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-               {services.map((service) => (
-                 <Card key={service.id} className="group cursor-pointer hover:border-gold/40 transition-all active:scale-[0.98] p-4 md:p-5">
-                   <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-base md:text-lg font-bold group-hover:text-gold transition-colors text-foreground leading-snug">
-                            {service.name}
-                          </h3>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
-                          {service.description}
-                        </p>
-                        <Badge className="flex w-fit items-center gap-1.5 px-2.5 py-1">
-                          <Clock size={12} /> {service.duration}
-                        </Badge>
-                      </div>
-                      <div className="ml-3 flex items-center justify-center w-8 h-8 rounded-full bg-input text-muted-foreground group-hover:bg-gold group-hover:text-black transition-all flex-shrink-0">
-                         <ChevronRight size={18} />
-                      </div>
-                   </div>
-                 </Card>
-               ))}
-             </div>
-           )}
 
-           {/* ABOUT TAB */}
-           {activeTab === 'about' && (
+          {/* SERVICES TAB */}
+          {activeTab === 'services' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              {services.map((service) => (
+                <Card key={service.id} className="group cursor-pointer hover:border-gold/40 transition-all active:scale-[0.98] p-4 md:p-5">
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-base md:text-lg font-bold group-hover:text-gold transition-colors text-foreground leading-snug">
+                          {service.name}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+                        {service.description}
+                      </p>
+                      <Badge className="flex w-fit items-center gap-1.5 px-2.5 py-1">
+                        <Clock size={12} /> {service.duration}
+                      </Badge>
+                    </div>
+                    <div className="ml-3 flex items-center justify-center w-8 h-8 rounded-full bg-input text-muted-foreground group-hover:bg-gold group-hover:text-black transition-all flex-shrink-0">
+                      <ChevronRight size={18} />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* ABOUT TAB */}
+          {activeTab === 'about' && (
             <div className="space-y-4 md:space-y-6">
               <Card className="p-5 md:p-6">
                 <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-gold">About Us</h3>
@@ -253,7 +260,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
                     <p className="text-xs md:text-sm text-muted-foreground">{shop?.zip_code}</p>
                   </div>
                 </Card>
-                
+
                 <Card className="flex items-start gap-3 md:gap-4 p-4 md:p-5">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-input flex items-center justify-center text-gold flex-shrink-0">
                     <Phone size={20} className="md:w-6 md:h-6" />
@@ -265,39 +272,39 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
                 </Card>
               </div>
 
-               <Card className="p-5 md:p-6">
-                  <h3 className="font-bold mb-3 md:mb-4 flex items-center gap-2 text-foreground text-base md:text-lg">
-                    <Clock size={18} className="text-gold" /> Business Hours
-                  </h3>
-                  <div className="space-y-2.5 md:space-y-3 text-sm text-muted-foreground">
-                    <div className="flex justify-between items-center border-b border-border pb-2.5">
-                      <span>Mon - Fri</span> 
-                      <span className="font-medium">10:00 AM - 8:00 PM</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-border pb-2.5">
-                      <span>Saturday</span> 
-                      <span className="font-medium">09:00 AM - 6:00 PM</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Sunday</span> 
-                      <span className="text-destructive font-medium">Closed</span>
-                    </div>
+              <Card className="p-5 md:p-6">
+                <h3 className="font-bold mb-3 md:mb-4 flex items-center gap-2 text-foreground text-base md:text-lg">
+                  <Clock size={18} className="text-gold" /> Business Hours
+                </h3>
+                <div className="space-y-2.5 md:space-y-3 text-sm text-muted-foreground">
+                  <div className="flex justify-between items-center border-b border-border pb-2.5">
+                    <span>Mon - Fri</span>
+                    <span className="font-medium">10:00 AM - 8:00 PM</span>
                   </div>
-               </Card>
+                  <div className="flex justify-between items-center border-b border-border pb-2.5">
+                    <span>Saturday</span>
+                    <span className="font-medium">09:00 AM - 6:00 PM</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Sunday</span>
+                    <span className="text-destructive font-medium">Closed</span>
+                  </div>
+                </div>
+              </Card>
             </div>
-           )}
+          )}
 
-           {/* REVIEWS TAB */}
-           {activeTab === 'reviews' && (
+          {/* REVIEWS TAB */}
+          {activeTab === 'reviews' && (
             <div className="space-y-3 md:space-y-4">
               <div className="flex items-center gap-4 md:gap-6 mb-4 md:mb-6 p-4 md:p-6 glass-card bg-gold/5 border-gold/20 rounded-lg">
-                 <div className="text-3xl md:text-4xl font-bold text-gold flex-shrink-0">{rating}</div>
-                 <div className="flex-1">
-                    <div className="flex text-gold mb-1.5">
-                      {[1,2,3,4,5].map(i => <Star key={i} size={16} fill="currentColor" />)}
-                    </div>
-                    <p className="text-xs md:text-sm text-muted-foreground">Based on {reviewsCount} reviews</p>
-                 </div>
+                <div className="text-3xl md:text-4xl font-bold text-gold flex-shrink-0">{rating}</div>
+                <div className="flex-1">
+                  <div className="flex text-gold mb-1.5">
+                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} fill="currentColor" />)}
+                  </div>
+                  <p className="text-xs md:text-sm text-muted-foreground">Based on {reviewsCount} reviews</p>
+                </div>
               </div>
 
               {/* Mock Reviews List */}
@@ -305,15 +312,15 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
                 <Card key={review} className="p-4 md:p-5">
                   <div className="flex justify-between items-start mb-2 md:mb-3 gap-2">
                     <div className="flex items-center gap-2">
-                       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <User size={14} />
-                       </div>
-                       <div className="font-bold text-foreground text-sm md:text-base">Satisfied Client</div>
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <User size={14} />
+                      </div>
+                      <div className="font-bold text-foreground text-sm md:text-base">Satisfied Client</div>
                     </div>
                     <span className="text-xs text-muted-foreground flex-shrink-0">2 days ago</span>
                   </div>
                   <div className="flex text-gold mb-2 md:mb-3 pl-10">
-                      {[1,2,3,4,5].map(i => <Star key={i} size={12} fill="currentColor" />)}
+                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={12} fill="currentColor" />)}
                   </div>
                   <p className="text-xs md:text-sm text-muted-foreground leading-relaxed pl-10">
                     "Great service! The barber really took his time and the atmosphere was amazing. Definitely coming back."
@@ -321,7 +328,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
                 </Card>
               ))}
             </div>
-           )}
+          )}
 
         </div>
       </div>
@@ -333,23 +340,23 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
         ) : activeAppointment ? (
           <div className="flex items-center justify-between gap-3 bg-card border border-gold/30 p-3 rounded-lg shadow-lg">
             <div className="flex items-center gap-3 overflow-hidden">
-               <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold flex-shrink-0">
-                 <Calendar size={18} />
-               </div>
-               <div className="flex flex-col min-w-0">
-                 <span className="text-xs font-bold text-gold uppercase tracking-wider">Booked</span>
-                 <span className="text-sm font-semibold truncate text-foreground">
-                   {formatDate(activeAppointment.start_time)}, {formatTime(activeAppointment.start_time)}
-                 </span>
-               </div>
+              <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold flex-shrink-0">
+                <Calendar size={18} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-gold uppercase tracking-wider">Booked</span>
+                <span className="text-sm font-semibold truncate text-foreground">
+                  {formatDate(activeAppointment.start_time)}, {formatTime(activeAppointment.start_time)}
+                </span>
+              </div>
             </div>
 
             {/* TRIGGER CUSTOM MODAL (MOBILE) */}
-            <Button 
-                variant="destructive" 
-                size="sm" 
-                onClick={() => setIsCancelModalOpen(true)}
-                className="h-9 px-3 shrink-0"
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setIsCancelModalOpen(true)}
+              className="h-9 px-3 shrink-0"
             >
               Cancel
             </Button>
@@ -365,11 +372,11 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
 
       {/* MODALS */}
       <BookingModal
-        isOpen={isBookingOpen} 
+        isOpen={isBookingOpen}
         onClose={() => {
           setIsBookingOpen(false);
           checkActiveAppointment();
-        }} 
+        }}
         shopName={shopName}
         shopId={shop?.id}
         userId={user?.id}
