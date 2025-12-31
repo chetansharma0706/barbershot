@@ -49,7 +49,8 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
         .order('start_time', { ascending: true })
         .limit(1)
         .maybeSingle();
-
+      console.log("Fetched active appointment:", appointment);
+      console.log(activeAppointment)
       setActiveAppointment(appointment || null);
     } catch (error) {
       console.error("Error fetching appointment", error);
