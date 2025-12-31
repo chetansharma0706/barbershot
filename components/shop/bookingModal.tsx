@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, use } from "react";
 import { X, CheckCircle2, Armchair, Loader2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { fetchBookingModalData } from "@/app/actions/fetchBookingData";
 import { bookAppointment } from "@/app/actions/bookAppointment";
+import { createClient } from "@/utils/supabase/client";
 
 /* ====================== TYPES ====================== */
 
@@ -13,6 +14,7 @@ type BookingModalProps = {
   onClose: () => void;
   shopName: string;
   shopId?: string;
+  userId?: string;
 };
 
 type Chair = {
@@ -121,21 +123,38 @@ const generateAvailableSlots = (
   return slots;
 };
 
-const getStoredUserInfo = (): UserInfo | null => {
+const getStoredUserInfo = async (userId: string): Promise<UserInfo | null> => {
   try {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : null;
+    const supabase = createClient();
+      const { data: customer, error: customerError } = await supabase
+    .from("customers")
+    .select("auth_user_id, name, phone")
+    .eq("auth_user_id", userId)
+    .single();
+    
+    if(customer && customer.name && customer.phone){
+      return {
+        name: customer.name,
+        phone: customer.phone,
+      };
+    }
+    return null;
+
   } catch (error) {
-    console.error("Error reading user info from localStorage:", error);
+    console.error("Error reading user info:", error);
     return null;
   }
 };
 
 const saveUserInfo = (userInfo: UserInfo): void => {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(userInfo));
+    const supabase = createClient();
+    supabase.from("customers").update({
+      name: userInfo.name,
+      phone: userInfo.phone,
+    });
   } catch (error) {
-    console.error("Error saving user info to localStorage:", error);
+    console.error("Error saving user info:", error);
   }
 };
 
@@ -195,6 +214,7 @@ export default function BookingModal({
   onClose,
   shopName,
   shopId,
+  userId,
 }: BookingModalProps) {
   // State management
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -264,14 +284,14 @@ export default function BookingModal({
 }, [shopId, dates]);
 
 
-  const loadUserInfo = useCallback(() => {
-    const userInfo = getStoredUserInfo();
+  const loadUserInfo = useCallback(async () => {
+    const userInfo = await getStoredUserInfo(userId || "");
     if (userInfo) {
       setUserName(userInfo.name);
       setUserPhone(userInfo.phone);
       setIsReturningUser(true);
     }
-  }, []);
+  }, [userId]);
 
   const handleChairSelect = useCallback((chairId: string) => {
     setSelectedChair(chairId);
@@ -588,7 +608,7 @@ export default function BookingModal({
                     Booking Confirmed!
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    Your appointment has been successfully booked
+                    Your appointment has been successfully booked 
                   </p>
                   <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-left">
                     <div className="flex justify-between text-sm">

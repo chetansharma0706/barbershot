@@ -267,6 +267,7 @@ export default function ShopPage({ shop , user }: { shop: Shop | null , user:any
         onClose={() => setIsBookingOpen(false)} 
         shopName={shopName}
         shopId={shop?.id}
+        userId={user?.id}
       />
     </div>
   );
