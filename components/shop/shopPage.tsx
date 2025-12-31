@@ -1,18 +1,39 @@
-import { Tables } from "@/database.types";
+"use client";
 
-import { useState, useEffect } from "react";
-import { Scissors, MapPin, Clock, Star, ChevronRight, Phone, Instagram, Globe, Navigation } from "lucide-react";
+import { Tables } from "@/database.types";
+import { useState, useEffect, useCallback } from "react";
+import { Scissors, MapPin, Clock, Star, ChevronRight, Phone, Calendar, Trash2, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import BookingModal from "./bookingModal";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner"; // Assuming you use sonner or similar, if not replace with alert
 
 type Shop = Tables<'barber_shops'>
 
-export default function ShopPage({ shop , user }: { shop: Shop | null , user:any }) {
+export default function ShopPage({ shop, user }: { shop: Shop | null, user: any }) {
   const [activeTab, setActiveTab] = useState('services');
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  
+  // New State for Appointment Management
+  const [activeAppointment, setActiveAppointment] = useState<any>(null);
+  const [isLoadingAppt, setIsLoadingAppt] = useState(true);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const supabase = createClient();
 
   // Handle scroll effect for sticky header
   useEffect(() => {
@@ -22,6 +43,82 @@ export default function ShopPage({ shop , user }: { shop: Shop | null , user:any
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // --- 1. Fetch Active Appointment Logic ---
+  const checkActiveAppointment = useCallback(async () => {
+    if (!user || !shop) return;
+    
+    try {
+      setIsLoadingAppt(true);
+      
+      // First get the customer ID for this auth user
+      const { data: customerData } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
+
+      if (!customerData) {
+        setIsLoadingAppt(false);
+        return;
+      }
+
+      // Now check for appointments that haven't ended yet
+      const now = new Date().toISOString();
+      const { data: appointment, error } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          start_time,
+          end_time,
+          stations ( name )
+        `)
+        .eq('shop_id', shop.id)
+        .eq('customer_id', customerData.id)
+        .gt('end_time', now) // Only show future or currently ongoing appointments
+        .order('start_time', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (appointment) {
+        setActiveAppointment(appointment);
+      } else {
+        setActiveAppointment(null);
+      }
+    } catch (error) {
+      console.error("Error fetching appointment", error);
+    } finally {
+      setIsLoadingAppt(false);
+    }
+  }, [user, shop, supabase]);
+
+  // Initial Fetch
+  useEffect(() => {
+    checkActiveAppointment();
+  }, [checkActiveAppointment]);
+
+  // --- 2. Cancel Appointment Logic ---
+  const handleCancelAppointment = async () => {
+    if (!activeAppointment) return;
+    setIsCancelling(true);
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', activeAppointment.id);
+
+      if (error) throw error;
+
+      setActiveAppointment(null);
+      toast.success("Appointment cancelled"); // Uncomment if you have a toast library
+    } catch (error) {
+      console.error("Error cancelling", error);
+      alert("Failed to cancel appointment");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   // Mock Services Data
   const services = [
@@ -39,8 +136,19 @@ export default function ShopPage({ shop , user }: { shop: Shop | null , user:any
   const rating = shop?.average_rating || 4.9;
   const reviews = shop?.total_reviews || 0;
 
+  // --- UI Helpers for Dates ---
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground pb-24 md:pb-0">
+    <div className="min-h-screen bg-background text-foreground pb-28 md:pb-0">
       
       {/* --- Sticky Navbar (Glass) --- */}
       <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${isScrolled ? 'bg-background/80 backdrop-blur-md border-b border-border py-3' : 'bg-transparent py-4'}`}>
@@ -100,11 +208,65 @@ export default function ShopPage({ shop , user }: { shop: Shop | null , user:any
               </div>
             </div>
 
-            {/* Desktop Booking CTA */}
-            <div className="hidden md:block flex-shrink-0">
-              <Button onClick={() => setIsBookingOpen(true)} className="px-6 py-2.5">
-                Book Appointment
-              </Button>
+            {/* Desktop Action Area */}
+            <div className="hidden md:block flex-shrink-0 w-[300px]">
+              {isLoadingAppt ? (
+                <div className="h-10 bg-muted animate-pulse rounded-md w-full" />
+              ) : activeAppointment ? (
+                // --- DESKTOP: Existing Appointment Card ---
+                <div className="bg-card/90 backdrop-blur-md border border-gold/30 p-4 rounded-xl shadow-lg animate-in slide-in-from-right-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="font-bold text-gold text-sm flex items-center gap-2">
+                        <Calendar size={14} /> Upcoming Visit
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatDate(activeAppointment.start_time)}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] border-gold text-gold bg-gold/10">Confirmed</Badge>
+                  </div>
+                  
+                  <div className="text-sm font-medium mb-3">
+                    {formatTime(activeAppointment.start_time)} 
+                    <span className="text-muted-foreground mx-1">-</span> 
+                    {formatTime(activeAppointment.end_time)}
+                  </div>
+                  
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs text-muted-foreground truncate">
+                      w/ {activeAppointment.stations?.name || "Barber"}
+                    </div>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive p-0 px-2">
+                          Cancel
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel Appointment?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to cancel your appointment on {formatDate(activeAppointment.start_time)}? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Keep it</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleCancelAppointment} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            {isCancelling ? <Loader2 className="animate-spin w-4 h-4" /> : "Yes, Cancel"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              ) : (
+                // --- DESKTOP: Standard Book Button ---
+                <Button onClick={() => setIsBookingOpen(true)} className="w-full px-6 py-2.5 shadow-lg">
+                  Book Appointment
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -250,21 +412,66 @@ export default function ShopPage({ shop , user }: { shop: Shop | null , user:any
       </div>
 
       {/* --- Mobile Sticky Action Bar --- */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 py-3 md:py-4 bg-background/90 backdrop-blur-xl border-t border-border md:hidden z-30 pb-safe">
-        <div className="flex gap-3">
-          <Button 
-            className="w-full mobile-button shadow-[var(--shadow-gold-lg)] animate-pulse hover:animate-none h-12" 
-            onClick={() => setIsBookingOpen(true)}
-          >
-            Book Appointment
-          </Button>
-        </div>
+      <div className="fixed bottom-0 left-0 right-0 px-4 py-3 md:py-4 bg-background/95 backdrop-blur-xl border-t border-border md:hidden z-30 pb-safe">
+        {isLoadingAppt ? (
+          <div className="w-full h-12 bg-muted rounded-lg animate-pulse" />
+        ) : activeAppointment ? (
+           // --- MOBILE: Existing Appointment Banner ---
+          <div className="flex items-center justify-between gap-3 bg-card border border-gold/30 p-3 rounded-lg shadow-lg">
+            <div className="flex items-center gap-3 overflow-hidden">
+               <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold flex-shrink-0">
+                 <Calendar size={18} />
+               </div>
+               <div className="flex flex-col min-w-0">
+                 <span className="text-xs font-bold text-gold uppercase tracking-wider">Booked</span>
+                 <span className="text-sm font-semibold truncate text-foreground">
+                   {formatDate(activeAppointment.start_time)}, {formatTime(activeAppointment.start_time)}
+                 </span>
+               </div>
+            </div>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="h-9 px-3 shrink-0">
+                  Cancel
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="w-[90%] rounded-xl">
+                 <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Cancel appointment on {formatDate(activeAppointment.start_time)} at {formatTime(activeAppointment.start_time)}?
+                    </AlertDialogDescription>
+                 </AlertDialogHeader>
+                 <AlertDialogFooter className="flex-row gap-2 justify-end">
+                    <AlertDialogCancel className="mt-0">Back</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCancelAppointment} className="bg-destructive hover:bg-destructive/90">
+                      {isCancelling ? <Loader2 className="animate-spin w-4 h-4" /> : "Confirm Cancel"}
+                    </AlertDialogAction>
+                 </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        ) : (
+          // --- MOBILE: Standard Book Button ---
+          <div className="flex gap-3">
+            <Button 
+              className="w-full mobile-button shadow-[var(--shadow-gold-lg)] animate-pulse hover:animate-none h-12" 
+              onClick={() => setIsBookingOpen(true)}
+            >
+              Book Appointment
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* --- Booking Modal Component --- */}
       <BookingModal
         isOpen={isBookingOpen} 
-        onClose={() => setIsBookingOpen(false)} 
+        onClose={() => {
+          setIsBookingOpen(false);
+          checkActiveAppointment(); // REFRESH DATA ON CLOSE
+        }} 
         shopName={shopName}
         shopId={shop?.id}
         userId={user?.id}
