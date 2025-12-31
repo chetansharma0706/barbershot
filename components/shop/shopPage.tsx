@@ -43,7 +43,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
       const { data: appointment } = await supabase
         .from('appointments')
         .select(`id, start_time, end_time, stations ( name )`)
-        .eq('shop_id', shop.id)
+        .eq('barber_shop_id', shop.id)
         .eq('customer_id', user.id)
         .gt('end_time', now)
         .order('start_time', { ascending: true })
