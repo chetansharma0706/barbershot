@@ -343,7 +343,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
       {/* ---------------------------------------------------- */}
       {/* MOBILE STICKY ACTION BAR                             */}
       {/* ---------------------------------------------------- */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border md:hidden z-30 pb-[env(safe-area-inset-bottom,20px)]">
+      <div className="fixed bottom-1 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border md:hidden z-30 pb-[env(safe-area-inset-bottom,20px)]">
         {isLoadingAppt ? (
           <div className="w-full h-12 bg-muted rounded-lg animate-pulse" />
         ) : activeAppointment ? (
@@ -394,17 +394,31 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
       {/* DETAILS MODAL (Inline Implementation) */}
       {isDetailsModalOpen && activeAppointment && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full md:max-w-md bg-card border border-border md:rounded-xl rounded-t-xl shadow-2xl animate-in slide-in-from-bottom-10 md:slide-in-from-bottom-0 md:zoom-in-95 duration-300 p-6 pb-[env(safe-area-inset-bottom,40px)]">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Info size={20} className="text-gold" /> Appointment Details
-              </h2>
-              <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setIsDetailsModalOpen(false)}>
-                <X size={18} />
-              </Button>
+          <div
+            className="absolute inset-0 bg-black/80 transition-opacity"
+            onClick={() => setIsDetailsModalOpen(false)}
+            aria-hidden="true"
+          />
+
+          <div className="relative w-full max-w-md bg-card rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl">
+            {/* {header} */}
+            <div className="p-6 flex justify-between items-start border-b">
+              <div>
+                <h3 className="text-xl font-bold">
+                  Appointment Details
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">at {shopName}</p>
+              </div>
+              <button
+                onClick={() => setIsDetailsModalOpen(false)}
+                className="p-1 hover:bg-muted rounded-lg transition-colors"
+                aria-label="Close modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="p-6 space-y-6">
               <div className="p-4 bg-muted/30 rounded-lg border border-border/50 space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Date</span>
@@ -433,7 +447,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
                     setIsDetailsModalOpen(false);
                     setIsCancelModalOpen(true);
                   }}
-                  className="text-sm text-destructive font-medium underline underline-offset-4 hover:text-destructive/80 transition-colors"
+                  className="text-sm text-destructive mb-2 font-medium underline underline-offset-4 hover:text-destructive/80 transition-colors"
                 >
                   Cancel Appointment
                 </button>
