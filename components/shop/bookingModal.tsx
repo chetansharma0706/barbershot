@@ -146,17 +146,25 @@ const getStoredUserInfo = async (userId: string): Promise<UserInfo | null> => {
   }
 };
 
-const saveUserInfo = (userInfo: UserInfo, userId: string): void => {
-  try {
-    const supabase = createClient();
-    supabase.from("customers").update({
-      name: userInfo.name,
-      phone: userInfo.phone,
-    }).eq("auth_user_id", userId);
-  } catch (error) {
-    console.error("Error saving user info:", error);
-  }
+const saveUserInfo = async (userId: string, userInfo: UserInfo) => {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("customers")
+    .upsert(
+      {
+        auth_user_id: userId,
+        name: userInfo.name.trim(),
+        phone: userInfo.phone.trim(),
+      },
+      { onConflict: "auth_user_id" }
+    )
+    .select()
+    .single();
+
+  if (error) console.error("customer save failed", error);
 };
+
 
 /* ====================== SUB-COMPONENTS ====================== */
 
@@ -327,7 +335,7 @@ export default function BookingModal({
         endTimeISO: endTime.toISOString(),
       });
       if (userId) {
-        saveUserInfo({ name: userName.trim(), phone: userPhone.trim() }, userId);
+        saveUserInfo(userId, { name: userName.trim(), phone: userPhone.trim() });
       }
 
       setStep(3);
