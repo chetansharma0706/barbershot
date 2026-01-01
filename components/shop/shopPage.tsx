@@ -49,11 +49,14 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
     end_time,
     stations!appointments_station_id_fkey (
       name
-    )
+    ),
+    status
   `)
         .eq('barber_shop_id', shop.id)
         .eq('customer_id', user.id)
+        .eq('status', 'booked')
         .gt('end_time', now)
+
         .order('start_time', { ascending: true })
         .limit(1)
         .maybeSingle();
@@ -72,15 +75,20 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
 
   const handleCancelAppointment = async () => {
     if (!activeAppointment) return;
-
+    try {
     const { error } = await supabase
       .from('appointments')
-      .delete()
+      .update({ status: 'cancelled' })
       .eq('id', activeAppointment.id);
 
     if (error) throw error;
+    } catch (error) {
+      console.error("Error cancelling appointment", error);
+    } finally {
+    checkActiveAppointment();
     setActiveAppointment(null);
-    setIsDetailsModalOpen(false); // Close details modal if open
+    setIsDetailsModalOpen(false); 
+    }// Close details modal if open
   };
 
   const services = [
@@ -343,13 +351,13 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
       {/* ---------------------------------------------------- */}
       {/* MOBILE STICKY ACTION BAR                             */}
       {/* ---------------------------------------------------- */}
-      <div className="fixed bottom-1 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border md:hidden z-30 pb-[env(safe-area-inset-bottom,20px)]">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border md:hidden z-30 pb-[env(safe-area-inset-bottom,20px)]">
         {isLoadingAppt ? (
-          <div className="w-full h-12 bg-muted rounded-lg animate-pulse" />
+          <div className="w-full h-12 mb-2 bg-muted rounded-lg animate-pulse" />
         ) : activeAppointment ? (
           <div
             onClick={() => setIsDetailsModalOpen(true)}
-            className="w-full bg-card border border-gold/30 rounded-lg p-2.5 px-4 shadow-lg flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-card/80"
+            className="w-full bg-card mb-2 border border-gold/30 rounded-lg p-2.5 px-4 shadow-lg flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-card/80"
           >
             <div className="flex flex-col">
               <span className="text-[10px] font-bold text-gold uppercase tracking-wider mb-0.5 flex items-center gap-1">
@@ -395,7 +403,7 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
       {isDetailsModalOpen && activeAppointment && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="absolute inset-0 bg-black/80 transition-opacity"
+            className="absolute inset-0 bg-black/60 transition-opacity"
             onClick={() => setIsDetailsModalOpen(false)}
             aria-hidden="true"
           />
