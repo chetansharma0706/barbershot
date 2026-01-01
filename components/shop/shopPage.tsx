@@ -79,7 +79,11 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
     const { error } = await supabase
       .from('appointments')
       .update({ status: 'cancelled' })
-      .eq('id', activeAppointment.id);
+      .eq('id', activeAppointment.id)
+  .eq('customer_id', user.id)
+  .select()
+  .single();
+
 
     if (error) throw error;
     } catch (error) {
