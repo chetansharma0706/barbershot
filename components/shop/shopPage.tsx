@@ -12,6 +12,8 @@ import { createClient } from "@/utils/supabase/client";
 
 type Shop = Tables<'barber_shops'>
 
+
+
 export default function ShopPage({ shop, user }: { shop: Shop | null, user: any }) {
   const [activeTab, setActiveTab] = useState('services');
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -56,7 +58,6 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
         .eq('customer_id', user.id)
         .eq('status', 'booked')
         .gt('end_time', now)
-
         .order('start_time', { ascending: true })
         .limit(1)
         .maybeSingle();
@@ -75,23 +76,23 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
 
   const handleCancelAppointment = async () => {
     if (!activeAppointment) return;
+    console.log("Cancelling appointment", activeAppointment.id);
     try {
-    const { error } = await supabase
-      .from('appointments')
-      .update({ status: 'cancelled' })
-      .eq('id', activeAppointment.id)
-  .eq('customer_id', user.id)
-  .select()
-  .single();
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'cancelled' })
+        .eq('id', activeAppointment.id)
+        .eq('customer_id', user.id)
+        .select()
+        .single();
 
-
-    if (error) throw error;
+      if (error) throw error;
     } catch (error) {
       console.error("Error cancelling appointment", error);
     } finally {
-    checkActiveAppointment();
-    setActiveAppointment(null);
-    setIsDetailsModalOpen(false); 
+      checkActiveAppointment();
+      setActiveAppointment(null);
+      setIsDetailsModalOpen(false);
     }// Close details modal if open
   };
 

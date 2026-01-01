@@ -146,13 +146,13 @@ const getStoredUserInfo = async (userId: string): Promise<UserInfo | null> => {
   }
 };
 
-const saveUserInfo = (userInfo: UserInfo): void => {
+const saveUserInfo = (userInfo: UserInfo, userId: string): void => {
   try {
     const supabase = createClient();
     supabase.from("customers").update({
       name: userInfo.name,
       phone: userInfo.phone,
-    });
+    }).eq("auth_user_id", userId);
   } catch (error) {
     console.error("Error saving user info:", error);
   }
@@ -326,7 +326,9 @@ export default function BookingModal({
         startTimeISO: startTime.toISOString(),
         endTimeISO: endTime.toISOString(),
       });
-      saveUserInfo({ name: userName.trim(), phone: userPhone.trim() });
+      if (userId) {
+        saveUserInfo({ name: userName.trim(), phone: userPhone.trim() }, userId);
+      }
 
       setStep(3);
     } catch (error: any) {
