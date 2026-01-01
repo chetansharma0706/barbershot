@@ -2,13 +2,14 @@
 
 import { Tables } from "@/database.types";
 import { useState, useEffect, useCallback } from "react";
-import { Scissors, MapPin, Clock, Star, ChevronRight, Phone, Calendar, User } from "lucide-react";
+import { Scissors, MapPin, Clock, Star, ChevronRight, Phone, Calendar, User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import BookingModal from "./bookingModal";
-import CancelModal from "@/components/CancelModal"; // Ensure this path matches where you saved the file
+import CancelModal from "@/components/CancelModal";
 import { createClient } from "@/utils/supabase/client";
+import { Separator } from "@/components/ui/separator"; // Make sure you have this or use a simple div
 
 type Shop = Tables<'barber_shops'>
 
@@ -57,8 +58,6 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
         .limit(1)
         .maybeSingle();
 
-      console.log("Fetched active appointment:", appointment);
-      console.log(activeAppointment)
       setActiveAppointment(appointment || null);
     } catch (error) {
       console.error("Error fetching appointment", error);
@@ -80,8 +79,6 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
       .eq('id', activeAppointment.id);
 
     if (error) throw error;
-
-    // Update local state immediately
     setActiveAppointment(null);
   };
 
@@ -149,224 +146,329 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
               <div className="flex flex-wrap items-center gap-x-3 md:gap-x-4 gap-y-2 text-xs md:text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5"><MapPin size={14} className="text-gold" /> <span>{shop?.city || "City"}, {shop?.state || "State"}</span></span>
                 <span className="flex items-center gap-1.5"><Clock size={14} className="text-gold" /> <span>Open Now</span></span>
-                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> <span>Accepting Bookings</span></span>
+                {!activeAppointment && (
+                  <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> <span>Accepting Bookings</span></span>
+                )}
               </div>
             </div>
 
-            {/* DESKTOP ACTION AREA */}
-            <div className="hidden md:block flex-shrink-0 w-[300px]">
+            {/* ---------------------------------------------------- */}
+            {/* IMPROVED DESKTOP ACTION AREA (Ticket Style)          */}
+            {/* ---------------------------------------------------- */}
+            <div className="hidden md:block flex-shrink-0 w-[320px]">
               {isLoadingAppt ? (
-                <div className="h-10 bg-muted animate-pulse rounded-md w-full" />
+                <div className="h-24 bg-muted/20 backdrop-blur-sm animate-pulse rounded-xl w-full border border-white/5" />
               ) : activeAppointment ? (
-                <div className="bg-card/90 backdrop-blur-md border border-gold/30 p-4 rounded-xl shadow-lg animate-in slide-in-from-right-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h4 className="font-bold text-gold text-sm flex items-center gap-2"><Calendar size={14} /> Upcoming Visit</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">{formatDate(activeAppointment.start_time)}</p>
+                <div className="relative overflow-hidden bg-zinc-950/80 backdrop-blur-xl border border-gold/40 rounded-xl shadow-2xl animate-in slide-in-from-right-4 group">
+
+                  {/* Gold Glow Effect */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gold/20 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded bg-gold/20 text-gold">
+                          <Calendar size={14} />
+                        </div>
+                        <span className="text-xs font-bold text-gold tracking-wide uppercase">Upcoming</span>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] border-green-500/50 text-green-400 bg-green-500/10 px-2">Confirmed</Badge>
                     </div>
-                    <Badge variant="outline" className="text-[10px] border-gold text-gold bg-gold/10">Confirmed</Badge>
+
+                    <div className="flex items-end justify-between gap-2">
+                      <div>
+                        <div className="text-2xl font-bold text-white tracking-tight">
+                          {formatTime(activeAppointment.start_time)}
+                        </div>
+                        <div className="text-sm text-muted-foreground font-medium">
+                          {formatDate(activeAppointment.start_time)}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] uppercase text-muted-foreground mb-0.5">Barber</div>
+                        <div className="text-xs font-semibold text-white bg-white/10 px-2 py-1 rounded">
+                          {activeAppointment.stations?.name?.split(' ')[0] || "Staff"}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="text-sm font-medium mb-3">
-                    {formatTime(activeAppointment.start_time)} <span className="text-muted-foreground mx-1">-</span> {formatTime(activeAppointment.end_time)}
+                  {/* Dashed Separator */}
+                  <div className="relative w-full h-px">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-dashed border-white/20"></div>
+                    </div>
+                    <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-background rounded-full border-r border-gold/40"></div>
+                    <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-background rounded-full border-l border-gold/40"></div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-xs text-muted-foreground truncate">w/ {activeAppointment.stations?.name || "Barber"}</div>
-
-                    {/* TRIGGER CUSTOM MODAL */}
+                  {/* Actions */}
+                  <div className="px-4 py-3 bg-black/20 flex justify-between items-center">
+                    <span className="text-[10px] text-muted-foreground">Booking ID: #{activeAppointment.id.slice(0, 4)}</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsCancelModalOpen(true)}
-                      className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive p-0 px-2"
+                      className="h-6 text-[10px] text-destructive hover:bg-destructive/10 hover:text-destructive px-3 rounded-full uppercase tracking-wider font-bold"
                     >
                       Cancel
                     </Button>
                   </div>
                 </div>
               ) : (
-                <Button onClick={() => setIsBookingOpen(true)} className="w-full px-6 py-2.5 shadow-lg">Book Appointment</Button>
+                <Button onClick={() => setIsBookingOpen(true)} className="w-full h-12 text-base font-semibold shadow-xl shadow-gold/20 hover:shadow-gold/30 transition-all">
+                  Book Appointment
+                </Button>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content (Tabs) */}
+      {/* Main Content (Tabs) - UNCHANGED */}
       <div className="container mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-10 max-w-5xl">
         <div className="flex items-center gap-4 md:gap-8 border-b border-border mb-6 md:mb-8 overflow-x-auto scrollbar-hide">
           {['Services', 'About', 'Reviews'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab.toLowerCase())}
-              className={`pb-3 md:pb-4 text-sm md:text-base font-medium transition-all relative whitespace-nowrap ${activeTab === tab.toLowerCase() ? "text-gold border-b-2 border-gold" : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              {tab}
-            </button>
+            <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())} className={`pb-3 md:pb-4 text-sm md:text-base font-medium transition-all relative whitespace-nowrap ${activeTab === tab.toLowerCase() ? "text-gold border-b-2 border-gold" : "text-muted-foreground hover:text-foreground"}`}>{tab}</button>
           ))}
         </div>
 
-        {/* Tab Content */}
         <div className="min-h-[300px] animate-in slide-in-from-bottom-4 duration-500">
-
-          {/* SERVICES TAB */}
           {activeTab === 'services' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {services.map((service) => (
                 <Card key={service.id} className="group cursor-pointer hover:border-gold/40 transition-all active:scale-[0.98] p-4 md:p-5">
                   <div className="flex justify-between items-start gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-base md:text-lg font-bold group-hover:text-gold transition-colors text-foreground leading-snug">
-                          {service.name}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
-                        {service.description}
-                      </p>
-                      <Badge className="flex w-fit items-center gap-1.5 px-2.5 py-1">
-                        <Clock size={12} /> {service.duration}
-                      </Badge>
+                      <div className="flex justify-between items-start mb-2"><h3 className="text-base md:text-lg font-bold group-hover:text-gold transition-colors text-foreground leading-snug">{service.name}</h3></div>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">{service.description}</p>
+                      <Badge className="flex w-fit items-center gap-1.5 px-2.5 py-1"><Clock size={12} /> {service.duration}</Badge>
                     </div>
-                    <div className="ml-3 flex items-center justify-center w-8 h-8 rounded-full bg-input text-muted-foreground group-hover:bg-gold group-hover:text-black transition-all flex-shrink-0">
-                      <ChevronRight size={18} />
-                    </div>
+                    <div className="ml-3 flex items-center justify-center w-8 h-8 rounded-full bg-input text-muted-foreground group-hover:bg-gold group-hover:text-black transition-all flex-shrink-0"><ChevronRight size={18} /></div>
                   </div>
                 </Card>
               ))}
             </div>
           )}
+          {/* ... (About and Reviews tabs omitted for brevity, they remain same as your code) ... */}
+          {activeTab === 'about' &&
 
-          {/* ABOUT TAB */}
-          {activeTab === 'about' && (
-            <div className="space-y-4 md:space-y-6">
+            (<div className="space-y-4 md:space-y-6">
+
               <Card className="p-5 md:p-6">
+
                 <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-gold">About Us</h3>
+
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+
                   {shop?.shop_description || "Welcome to our premium barbershop. We are dedicated to providing the best grooming experience using top-quality products and techniques. Sit back, relax, and let our master barbers take care of your style."}
+
                 </p>
+
               </Card>
+
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <Card className="flex items-start gap-3 md:gap-4 p-4 md:p-5">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-input flex items-center justify-center text-gold flex-shrink-0">
-                    <MapPin size={20} className="md:w-6 md:h-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-foreground mb-1 text-sm md:text-base">Visit Us</h4>
-                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed break-words">{address}</p>
-                    <p className="text-xs md:text-sm text-muted-foreground">{shop?.zip_code}</p>
-                  </div>
-                </Card>
 
                 <Card className="flex items-start gap-3 md:gap-4 p-4 md:p-5">
+
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-input flex items-center justify-center text-gold flex-shrink-0">
-                    <Phone size={20} className="md:w-6 md:h-6" />
+
+                    <MapPin size={20} className="md:w-6 md:h-6" />
+
                   </div>
+
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-foreground mb-1 text-sm md:text-base">Contact</h4>
-                    <p className="text-xs md:text-sm text-muted-foreground break-words">{shop?.phone || "No phone listed"}</p>
+
+                    <h4 className="font-bold text-foreground mb-1 text-sm md:text-base">Visit Us</h4>
+
+                    <p className="text-xs md:text-sm text-muted-foreground leading-relaxed break-words">{address}</p>
+
+                    <p className="text-xs md:text-sm text-muted-foreground">{shop?.zip_code}</p>
+
                   </div>
+
                 </Card>
+
+
+
+                <Card className="flex items-start gap-3 md:gap-4 p-4 md:p-5">
+
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-input flex items-center justify-center text-gold flex-shrink-0">
+
+                    <Phone size={20} className="md:w-6 md:h-6" />
+
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+
+                    <h4 className="font-bold text-foreground mb-1 text-sm md:text-base">Contact</h4>
+
+                    <p className="text-xs md:text-sm text-muted-foreground break-words">{shop?.phone || "No phone listed"}</p>
+
+                  </div>
+
+                </Card>
+
               </div>
+
+
 
               <Card className="p-5 md:p-6">
-                <h3 className="font-bold mb-3 md:mb-4 flex items-center gap-2 text-foreground text-base md:text-lg">
-                  <Clock size={18} className="text-gold" /> Business Hours
-                </h3>
-                <div className="space-y-2.5 md:space-y-3 text-sm text-muted-foreground">
-                  <div className="flex justify-between items-center border-b border-border pb-2.5">
-                    <span>Mon - Fri</span>
-                    <span className="font-medium">10:00 AM - 8:00 PM</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b border-border pb-2.5">
-                    <span>Saturday</span>
-                    <span className="font-medium">09:00 AM - 6:00 PM</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Sunday</span>
-                    <span className="text-destructive font-medium">Closed</span>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          )}
 
-          {/* REVIEWS TAB */}
-          {activeTab === 'reviews' && (
-            <div className="space-y-3 md:space-y-4">
-              <div className="flex items-center gap-4 md:gap-6 mb-4 md:mb-6 p-4 md:p-6 glass-card bg-gold/5 border-gold/20 rounded-lg">
-                <div className="text-3xl md:text-4xl font-bold text-gold flex-shrink-0">{rating}</div>
-                <div className="flex-1">
-                  <div className="flex text-gold mb-1.5">
-                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} fill="currentColor" />)}
+                <h3 className="font-bold mb-3 md:mb-4 flex items-center gap-2 text-foreground text-base md:text-lg">
+
+                  <Clock size={18} className="text-gold" /> Business Hours
+
+                </h3>
+
+                <div className="space-y-2.5 md:space-y-3 text-sm text-muted-foreground">
+
+                  <div className="flex justify-between items-center border-b border-border pb-2.5">
+
+                    <span>Mon - Fri</span>
+
+                    <span className="font-medium">10:00 AM - 8:00 PM</span>
+
                   </div>
-                  <p className="text-xs md:text-sm text-muted-foreground">Based on {reviewsCount} reviews</p>
+
+                  <div className="flex justify-between items-center border-b border-border pb-2.5">
+
+                    <span>Saturday</span>
+
+                    <span className="font-medium">09:00 AM - 6:00 PM</span>
+
+                  </div>
+
+                  <div className="flex justify-between items-center">
+
+                    <span>Sunday</span>
+
+                    <span className="text-destructive font-medium">Closed</span>
+
+                  </div>
+
                 </div>
+
+              </Card>
+
+            </div>)}
+          {activeTab === 'reviews' && (
+
+            <div className="space-y-3 md:space-y-4">
+
+              <div className="flex items-center gap-4 md:gap-6 mb-4 md:mb-6 p-4 md:p-6 glass-card bg-gold/5 border-gold/20 rounded-lg">
+
+                <div className="text-3xl md:text-4xl font-bold text-gold flex-shrink-0">{rating}</div>
+
+                <div className="flex-1">
+
+                  <div className="flex text-gold mb-1.5">
+
+                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} fill="currentColor" />)}
+
+                  </div>
+
+                  <p className="text-xs md:text-sm text-muted-foreground">Based on {reviewsCount} reviews</p>
+
+                </div>
+
               </div>
 
+
+
               {/* Mock Reviews List */}
+
               {[1, 2, 3].map((review) => (
+
                 <Card key={review} className="p-4 md:p-5">
+
                   <div className="flex justify-between items-start mb-2 md:mb-3 gap-2">
+
                     <div className="flex items-center gap-2">
+
                       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+
                         <User size={14} />
+
                       </div>
+
                       <div className="font-bold text-foreground text-sm md:text-base">Satisfied Client</div>
+
                     </div>
+
                     <span className="text-xs text-muted-foreground flex-shrink-0">2 days ago</span>
+
                   </div>
+
                   <div className="flex text-gold mb-2 md:mb-3 pl-10">
+
                     {[1, 2, 3, 4, 5].map(i => <Star key={i} size={12} fill="currentColor" />)}
+
                   </div>
+
                   <p className="text-xs md:text-sm text-muted-foreground leading-relaxed pl-10">
+
                     "Great service! The barber really took his time and the atmosphere was amazing. Definitely coming back."
+
                   </p>
+
                 </Card>
+
               ))}
+
             </div>
+
           )}
+
 
         </div>
       </div>
 
-      {/* MOBILE STICKY ACTION BAR */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 py-3 md:py-4 bg-background/95 backdrop-blur-xl border-t border-border md:hidden z-30 pb-safe">
+      {/* ---------------------------------------------------- */}
+      {/* IMPROVED MOBILE STICKY ACTION BAR                    */}
+      {/* ---------------------------------------------------- */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border md:hidden z-30 pb-[env(safe-area-inset-bottom,20px)]">
         {isLoadingAppt ? (
           <div className="w-full h-12 bg-muted rounded-lg animate-pulse" />
         ) : activeAppointment ? (
-          <div className="flex items-center justify-between gap-3 bg-card border border-gold/30 p-3 rounded-lg shadow-lg">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold flex-shrink-0">
-                <Calendar size={18} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-gold uppercase tracking-wider">Booked</span>
-                <span className="text-sm font-semibold truncate text-foreground">
-                  {formatDate(activeAppointment.start_time)}, {formatTime(activeAppointment.start_time)}
+          <div className="flex items-stretch gap-3">
+            {/* Info Section */}
+            <div className="flex-1 bg-card border border-gold/30 rounded-lg p-2.5 px-4 shadow-lg flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-gold uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Confirmed
                 </span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-lg font-bold text-foreground leading-none">
+                    {formatTime(activeAppointment.start_time)}
+                  </span>
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {formatDate(activeAppointment.start_time).split(',')[0]}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right pl-3 border-l border-border">
+                <div className="text-[10px] text-muted-foreground">Barber</div>
+                <div className="text-xs font-semibold">{activeAppointment.stations?.name?.split(' ')[0] || "Any"}</div>
               </div>
             </div>
 
-            {/* TRIGGER CUSTOM MODAL (MOBILE) */}
+            {/* Cancel Button - Square style for ease of tapping */}
             <Button
-              variant="destructive"
-              size="sm"
+              variant="outline"
               onClick={() => setIsCancelModalOpen(true)}
-              className="h-9 px-3 shrink-0"
+              className="h-auto aspect-square flex flex-col items-center justify-center gap-1 border-destructive/30 hover:bg-destructive/10 hover:border-destructive text-destructive px-0 w-[60px] rounded-lg"
             >
-              Cancel
+              <X size={18} />
+              <span className="text-[9px] font-bold">Cancel</span>
             </Button>
           </div>
         ) : (
-          <div className="flex gap-3">
-            <Button className="w-full mobile-button h-12" onClick={() => setIsBookingOpen(true)}>
-              Book Appointment
-            </Button>
-          </div>
+          <Button className="w-full h-12 text-base shadow-lg shadow-primary/20" onClick={() => setIsBookingOpen(true)}>
+            Book Appointment
+          </Button>
         )}
       </div>
 
@@ -382,7 +484,6 @@ export default function ShopPage({ shop, user }: { shop: Shop | null, user: any 
         userId={user?.id}
       />
 
-      {/* NEW CUSTOM CANCEL MODAL */}
       <CancelModal
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
