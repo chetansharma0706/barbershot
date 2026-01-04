@@ -317,7 +317,7 @@ export default function BookingModal({
       // NOTE: Ensure your fetchBookingModalData action returns 'business_hours' mapped to 'businessHours' or matches naming
       const data = await fetchBookingModalData(shopId);
       
-      const { bookedSlots, stations, business_hours } = data as any; // Cast to any to safely access business_hours if type is strict
+      const { bookedSlots, stations, businessHours } = data as any; // Cast to any to safely access business_hours if type is strict
 
       const transformedChairs: Chair[] = stations.map((station: any) => ({
         id: station.id,
@@ -328,8 +328,8 @@ export default function BookingModal({
 
       setBookedSlots(bookedSlots || []);
       setChairs(transformedChairs);
-      setBusinessHours(business_hours);
-      console.log("Fetched business hours:", business_hours);
+      setBusinessHours(businessHours);
+      console.log("Fetched business hours:", businessHours);
 
       if (dates.length > 0) {
         setSelectedDate(dates[0].dateObj);
