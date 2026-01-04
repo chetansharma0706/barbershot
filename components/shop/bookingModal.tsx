@@ -329,6 +329,7 @@ export default function BookingModal({
       setBookedSlots(bookedSlots || []);
       setChairs(transformedChairs);
       setBusinessHours(business_hours);
+      console.log("Fetched business hours:", business_hours);
 
       if (dates.length > 0) {
         setSelectedDate(dates[0].dateObj);
