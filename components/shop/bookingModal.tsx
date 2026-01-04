@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, use } from "react";
-import { X, CheckCircle2, Armchair, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { X, CheckCircle2, Armchair, Loader2, Clock, CalendarX2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { fetchBookingModalData } from "@/app/actions/fetchBookingData";
 import { bookAppointment } from "@/app/actions/bookAppointment";
@@ -27,6 +27,7 @@ type Chair = {
 type BookedSlot = {
   station_id: string;
   start_time: string;
+  duration?: number; // Optional, defaults to standard duration if missing
 };
 
 type DateOption = {
@@ -40,13 +41,20 @@ type UserInfo = {
   phone: string;
 };
 
+type DaySchedule = {
+  open: string;
+  close: string;
+  isOpen: boolean;
+};
+
+type BusinessHours = {
+  [key: string]: DaySchedule;
+};
+
 /* ====================== CONSTANTS ====================== */
 
-const BOOKING_DURATION_MINUTES = 45;
-const SHOP_START_HOUR = 10;
-const SHOP_END_HOUR = 20;
+const BOOKING_DURATION_MINUTES = 45; // Standard duration for new bookings
 const DAYS_TO_SHOW = 4;
-const LOCAL_STORAGE_KEY = "barberAppUser";
 
 /* ====================== UTILITIES ====================== */
 
@@ -72,51 +80,85 @@ const getNextDays = (count: number): DateOption[] => {
   });
 };
 
+// Helper to check if two time ranges overlap
+const doIntervalsOverlap = (
+  startA: Date,
+  endA: Date,
+  startB: Date,
+  endB: Date
+) => {
+  return startA < endB && endA > startB;
+};
+
 const generateAvailableSlots = (
   date: Date | null,
   chairId: string | null,
   bookedSlots: BookedSlot[],
-  startHour: number = SHOP_START_HOUR,
-  endHour: number = SHOP_END_HOUR,
+  businessHours: BusinessHours | null,
   intervalMinutes: number = BOOKING_DURATION_MINUTES
 ): string[] => {
-  if (!date || !chairId) return [];
+  if (!date || !chairId || !businessHours) return [];
+
+  // 1. Determine the day of the week (monday, tuesday...)
+  const dayName = date.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+  const schedule = businessHours[dayName];
+
+  // 2. If no schedule found or shop is closed, return empty
+  if (!schedule || !schedule.isOpen) return [];
 
   const slots: string[] = [];
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
 
+  // 3. Parse Open and Close times (e.g., "09:00" -> 9, 0)
+  const [openHour, openMinute] = schedule.open.split(":").map(Number);
+  const [closeHour, closeMinute] = schedule.close.split(":").map(Number);
+
+  // 4. Set boundaries for the day
   const cursor = new Date(date);
-  cursor.setHours(startHour, 0, 0, 0);
+  cursor.setHours(openHour, openMinute, 0, 0);
 
   const endTime = new Date(date);
-  endTime.setHours(endHour, 0, 0, 0);
+  endTime.setHours(closeHour, closeMinute, 0, 0);
 
-  const bookedTimestamps = new Set(
-    bookedSlots
-      .filter((slot) => slot.station_id === chairId)
-      .map((slot) => Math.floor(new Date(slot.start_time).getTime() / 60000))
-  );
+  // 5. Filter bookings for this specific chair only
+  const chairBookings = bookedSlots.filter((slot) => slot.station_id === chairId);
 
+  // 6. Generate slots
   while (cursor < endTime) {
-    const slotTimestamp = cursor.getTime();
-    const slotMinutes = Math.floor(slotTimestamp / 60000);
+    const slotStart = new Date(cursor);
+    const slotEnd = new Date(cursor.getTime() + intervalMinutes * 60000);
 
-    if (isToday && slotTimestamp <= now.getTime()) {
+    // Stop if the slot extends beyond closing time
+    if (slotEnd > endTime) break;
+
+    // Check 1: Is in the past?
+    if (isToday && slotStart.getTime() <= now.getTime()) {
       cursor.setMinutes(cursor.getMinutes() + intervalMinutes);
       continue;
     }
 
-    if (!bookedTimestamps.has(slotMinutes)) {
+    // Check 2: Overlap detection (The Fix)
+    const isBlocked = chairBookings.some((booking) => {
+      const bookingStart = new Date(booking.start_time);
+      // Use booking duration if exists, otherwise default
+      const bookingDuration = booking.duration || intervalMinutes; 
+      const bookingEnd = new Date(bookingStart.getTime() + bookingDuration * 60000);
+
+      return doIntervalsOverlap(slotStart, slotEnd, bookingStart, bookingEnd);
+    });
+
+    if (!isBlocked) {
       slots.push(
-        cursor.toLocaleTimeString("en-US", {
+        slotStart.toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
-          hour12: false,
+          hour12: false, // 24h format for cleaner UI logic, can format to 12h in render if needed
         })
       );
     }
 
+    // Move to next interval
     cursor.setMinutes(cursor.getMinutes() + intervalMinutes);
   }
 
@@ -126,20 +168,19 @@ const generateAvailableSlots = (
 const getStoredUserInfo = async (userId: string): Promise<UserInfo | null> => {
   try {
     const supabase = createClient();
-      const { data: customer, error: customerError } = await supabase
-    .from("customers")
-    .select("auth_user_id, name, phone")
-    .eq("auth_user_id", userId)
-    .single();
-    
-    if(customer && customer.name && customer.phone){
+    const { data: customer } = await supabase
+      .from("customers")
+      .select("auth_user_id, name, phone")
+      .eq("auth_user_id", userId)
+      .single();
+
+    if (customer && customer.name && customer.phone) {
       return {
         name: customer.name,
         phone: customer.phone,
       };
     }
     return null;
-
   } catch (error) {
     console.error("Error reading user info:", error);
     return null;
@@ -148,8 +189,7 @@ const getStoredUserInfo = async (userId: string): Promise<UserInfo | null> => {
 
 const saveUserInfo = async (userId: string, userInfo: UserInfo) => {
   const supabase = createClient();
-
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("customers")
     .upsert(
       {
@@ -165,10 +205,8 @@ const saveUserInfo = async (userId: string, userInfo: UserInfo) => {
   if (error) console.error("customer save failed", error);
 };
 
-
 /* ====================== SUB-COMPONENTS ====================== */
 
-// New Skeleton Component
 const BookingSkeleton = () => (
   <div className="space-y-6 animate-pulse">
     {/* Chair Skeleton */}
@@ -189,7 +227,6 @@ const BookingSkeleton = () => (
         ))}
       </div>
     </div>
-
     {/* Date Skeleton */}
     <div>
       <div className="h-4 w-24 bg-muted rounded mb-3" />
@@ -202,7 +239,6 @@ const BookingSkeleton = () => (
         ))}
       </div>
     </div>
-
     {/* Time Slots Skeleton */}
     <div>
       <div className="h-4 w-32 bg-muted rounded mb-3" />
@@ -232,6 +268,8 @@ export default function BookingModal({
 
   const [chairs, setChairs] = useState<Chair[]>([]);
   const [bookedSlots, setBookedSlots] = useState<BookedSlot[]>([]);
+  const [businessHours, setBusinessHours] = useState<BusinessHours | null>(null);
+  
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -242,9 +280,17 @@ export default function BookingModal({
   // Memoized values
   const dates = useMemo(() => getNextDays(DAYS_TO_SHOW), []);
 
+  // Determine if the currently selected date is open/closed
+  const isShopClosedOnSelectedDate = useMemo(() => {
+    if (!selectedDate || !businessHours) return false;
+    const dayName = selectedDate.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+    const schedule = businessHours[dayName];
+    return schedule ? !schedule.isOpen : false;
+  }, [selectedDate, businessHours]);
+
   const availableSlots = useMemo(
-    () => generateAvailableSlots(selectedDate, selectedChair, bookedSlots),
-    [selectedDate, selectedChair, bookedSlots]
+    () => generateAvailableSlots(selectedDate, selectedChair, bookedSlots, businessHours),
+    [selectedDate, selectedChair, bookedSlots, businessHours]
   );
 
   const resetState = useCallback(() => {
@@ -253,6 +299,7 @@ export default function BookingModal({
     setSelectedTime(null);
     setSelectedChair(null);
     setBookedSlots([]);
+    setBusinessHours(null);
     setSubmitting(false);
   }, []);
 
@@ -261,36 +308,37 @@ export default function BookingModal({
     onClose();
   }, [resetState, onClose]);
 
- const fetchBookingData = useCallback(async () => {
-  if (!shopId) return;
+  const fetchBookingData = useCallback(async () => {
+    if (!shopId) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const { bookedSlots, stations } =
-      await fetchBookingModalData(shopId);
+    try {
+      // NOTE: Ensure your fetchBookingModalData action returns 'business_hours' mapped to 'businessHours' or matches naming
+      const data = await fetchBookingModalData(shopId);
+      
+      const { bookedSlots, stations, business_hours } = data as any; // Cast to any to safely access business_hours if type is strict
 
-    const transformedChairs: Chair[] =
-      stations.map((station) => ({
+      const transformedChairs: Chair[] = stations.map((station: any) => ({
         id: station.id,
         name: station.name,
         imgUrl: station.station_image_url || undefined,
         isAvailable: station.is_active,
       }));
 
-    setBookedSlots(bookedSlots || []);
-    setChairs(transformedChairs);
+      setBookedSlots(bookedSlots || []);
+      setChairs(transformedChairs);
+      setBusinessHours(business_hours);
 
-    if (dates.length > 0) {
-      setSelectedDate(dates[0].dateObj);
+      if (dates.length > 0) {
+        setSelectedDate(dates[0].dateObj);
+      }
+    } catch (error) {
+      console.error("Error fetching booking data:", error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching booking data:", error);
-  } finally {
-    setLoading(false);
-  }
-}, [shopId, dates]);
-
+  }, [shopId, dates]);
 
   const loadUserInfo = useCallback(async () => {
     const userInfo = await getStoredUserInfo(userId || "");
@@ -345,14 +393,7 @@ export default function BookingModal({
     } finally {
       setSubmitting(false);
     }
-  }, [
-    selectedDate,
-    selectedTime,
-    selectedChair,
-    shopId,
-    userName,
-    userPhone,
-  ]);
+  }, [selectedDate, selectedTime, selectedChair, shopId, userName, userPhone]);
 
   const handleUserDetailsSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -421,9 +462,6 @@ export default function BookingModal({
         {/* Scrollable Content Area */}
         <div className="p-6 max-h-[70vh] overflow-y-auto">
           {loading ? (
-            /* =================================================== */
-            /* UPDATED: Skeleton Loading State                     */
-            /* =================================================== */
             <BookingSkeleton />
           ) : (
             <>
@@ -503,29 +541,38 @@ export default function BookingModal({
                       Select Date
                     </label>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                      {dates.map((dateOption, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleDateSelect(dateOption.dateObj)}
-                          disabled={!selectedChair}
-                          className={`
-                            flex-shrink-0 w-20 h-20 rounded-xl border transition-all duration-200
-                            ${
-                              selectedDate?.toDateString() ===
-                              dateOption.dateObj.toDateString()
-                                ? "border-primary bg-primary/10 ring-2 ring-primary/50"
-                                : "border-border bg-card hover:border-primary/50 hover:bg-muted/50"
-                            }
-                          `}
-                        >
-                          <div className="text-xs text-muted-foreground">
-                            {dateOption.label}
-                          </div>
-                          <div className="font-bold mt-1">
-                            {dateOption.display}
-                          </div>
-                        </button>
-                      ))}
+                      {dates.map((dateOption, index) => {
+                        // Check if this specific date is closed in business hours
+                        const dayName = dateOption.dateObj.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase();
+                        const isDayClosed = businessHours && businessHours[dayName] ? !businessHours[dayName].isOpen : false;
+
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => handleDateSelect(dateOption.dateObj)}
+                            disabled={!selectedChair}
+                            className={`
+                              flex-shrink-0 w-20 h-20 rounded-xl border transition-all duration-200
+                              ${
+                                selectedDate?.toDateString() ===
+                                dateOption.dateObj.toDateString()
+                                  ? "border-primary bg-primary/10 ring-2 ring-primary/50"
+                                  : "border-border bg-card hover:border-primary/50 hover:bg-muted/50"
+                              }
+                            `}
+                          >
+                            <div className="text-xs text-muted-foreground">
+                              {dateOption.label}
+                            </div>
+                            <div className="font-bold mt-1">
+                              {dateOption.display}
+                            </div>
+                            {isDayClosed && (
+                               <div className="text-[10px] text-red-500 font-medium mt-1">Closed</div>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -540,7 +587,15 @@ export default function BookingModal({
                     <label className="text-sm font-semibold mb-3 block">
                       Available Time Slots
                     </label>
-                    {availableSlots.length > 0 ? (
+
+                    {/* Logic to handle CLOSED shops vs NO SLOTS */}
+                    {isShopClosedOnSelectedDate ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-xl bg-muted/20">
+                          <CalendarX2 className="w-8 h-8 mb-2 opacity-50" />
+                          <p className="font-medium">Shop Closed</p>
+                          <p className="text-xs">The shop is not open on this day.</p>
+                        </div>
+                    ) : availableSlots.length > 0 ? (
                       <div className="grid grid-cols-4 gap-2">
                         {availableSlots.map((timeSlot) => (
                           <button
@@ -561,12 +616,13 @@ export default function BookingModal({
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p className="text-sm">
-                          No available slots for this date
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed border-border rounded-xl">
+                        <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm font-medium">
+                          No available slots
                         </p>
                         <p className="text-xs mt-1">
-                          Please select another date
+                          Try selecting another date or barber
                         </p>
                       </div>
                     )}
@@ -618,7 +674,7 @@ export default function BookingModal({
                     Booking Confirmed!
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    Your appointment has been successfully booked 
+                    Your appointment has been successfully booked
                   </p>
                   <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-left">
                     <div className="flex justify-between text-sm">
@@ -653,8 +709,8 @@ export default function BookingModal({
           <Button
             className="w-full h-11 font-medium"
             disabled={
-              loading || // Disabled while skeleton is showing
-              (step === 1 && !isStep1Valid) ||
+              loading ||
+              (step === 1 && (!isStep1Valid || isShopClosedOnSelectedDate)) || // Disable if shop is closed
               (step === 2 && !isStep2Valid) ||
               submitting
             }
@@ -666,7 +722,7 @@ export default function BookingModal({
                 Processing...
               </>
             ) : step === 1 ? (
-              "Continue to Booking"
+              isShopClosedOnSelectedDate ? "Shop Closed" : "Continue to Booking"
             ) : step === 2 ? (
               "Complete Booking"
             ) : (
